@@ -1,10 +1,12 @@
+mod test;
+
 use clap::Parser;
 use regex::bytes::Regex;
 use std::fmt::{Display, Formatter};
 use std::num::NonZeroUsize;
 use std::ops::Range;
 use std::path::PathBuf;
-use std::thread;
+use std::{fs, thread};
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
@@ -33,8 +35,16 @@ fn main() {
         // Take all paths from the command line arguments, and map the paths to create PathBufs
         args.paths.iter().map(PathBuf::from).collect()
     };
+    // println!("length: {}", paths.len());
+    // let a = paths[0].clone();
+    // let b = paths[1].clone();
+    //
+    // println!("{}", a.to_str().unwrap());
+    // println!("{}", b.to_str().unwrap());
+    let mut all_files: Vec<PathBuf> = Vec::new();
+    test::ite(&mut all_files, &paths[0]);
+    test::search(&mut all_files, regex);
 
-    todo!()
 }
 
 /// This structure represents the matches that the tool found in **a single file**.
