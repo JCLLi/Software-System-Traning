@@ -45,7 +45,7 @@ fn main() {
     for i in 0..paths.len(){
         test::ite(&mut all_files, &paths[i]);
     }
-    test::search(&mut all_files, regex);
+    test::printout(&mut all_files, regex);
 
 }
 
