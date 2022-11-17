@@ -24,6 +24,7 @@ pub fn ite(entries: &mut Vec<PathBuf>, path: &Path) -> io::Result<()>{
     }
     Ok(())
 }
+
 pub fn search(path: &PathBuf, regex: &Regex, counter: Arc<Mutex<i32>>){
     //println!("aaa");
     let mut ranges: Vec<Range<usize>>= Vec::new();

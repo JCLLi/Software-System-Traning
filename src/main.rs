@@ -2,6 +2,7 @@ mod test;
 
 use clap::Parser;
 use regex::bytes::Regex;
+use std::f32::consts::E;
 use std::fmt::{Display, Formatter};
 use std::num::NonZeroUsize;
 use std::ops::Range;
@@ -40,7 +41,10 @@ fn main() {
 
     let mut all_files: Vec<PathBuf> = Vec::new();
     for i in 0..paths.len(){
-        test::ite(&mut all_files, &paths[i]);
+        match test::ite(&mut all_files, &paths[i]) {
+            Ok(_) => {}
+            Err(error) => panic!("The error is {}", error),
+        }
     }
 
     let (tx, rx) = mpsc::channel();
@@ -59,8 +63,9 @@ fn main() {
     let counter = Arc::new(Mutex::new(0));
 
     for i in (0..all_files.len()).step_by(core_num) {
+        let mut thread_vec = Vec::new();
         for j in i..i+core_num {
-            if j >= all_files.len() {
+            if j > all_files.len() {
                 return;
             }
             let path = all_files[j].clone();
@@ -72,7 +77,7 @@ fn main() {
             match content {
                 Err(error) => panic!("Problem reading the file: {:?}", error),
                 Ok(content) => {
-                    std::thread::spawn(move||{
+                    let thread = std::thread::spawn(move||{
                         if regex.is_match(&content) {
                             *counter.lock().unwrap() += 1;
                             let mut grep_res = GrepResult {
@@ -87,11 +92,15 @@ fn main() {
                             tx.send(grep_res).unwrap();
                         }
                     });
+                    thread_vec.push(thread);
                 }
-            } 
+            }
+        }
+        // to wait for threads to end
+        for thread in thread_vec {
+            thread.join().unwrap();
         }
     }
-    // where to add the join function?
 }
 
 
