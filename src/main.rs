@@ -42,7 +42,9 @@ fn main() {
     // println!("{}", a.to_str().unwrap());
     // println!("{}", b.to_str().unwrap());
     let mut all_files: Vec<PathBuf> = Vec::new();
-    test::ite(&mut all_files, &paths[0]);
+    for i in 0..paths.len(){
+        test::ite(&mut all_files, &paths[i]);
+    }
     test::search(&mut all_files, regex);
 
 }
