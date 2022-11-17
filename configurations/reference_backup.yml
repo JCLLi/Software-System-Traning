@@ -1,0 +1,39 @@
+---
+general:
+  # Very small float value.
+  # Two floats that are closer together than this value will be equal.
+  epsilon: 0.00001
+
+  # Filename of the scene that will render
+  scenename: scenes/monte-carlo.obj
+
+  # Filename of the generated bitmap
+  outputname: render.bmp
+
+  # Path to search for texture files
+  texturepath: scenes
+camera:
+  # The position of the camera in 3d space
+  # 3 floats
+  position:
+    x: 0.0
+    y: 1.0
+    z: 3.0
+  direction:
+    x: 0.0
+    y: 0.0
+    z: -1.0
+  # The width of the image to be generated
+  width: 500
+  # The height of the image to be generated
+  height: 500
+  # The field of view of the camera
+  fov: 60.0
+
+generator:
+  threaded:
+    threads:
+      all
+
+raytracer:
+  samples_per_pixel: 200

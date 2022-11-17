@@ -1,3 +1,5 @@
-target
+target/
 .idea
+render.bmp
+backup.rgb
 .vscode
