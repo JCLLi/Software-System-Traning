@@ -27,20 +27,19 @@ pub fn ite(entries: &mut Vec<PathBuf>, path: &Path) -> io::Result<()>{
 pub fn search(path: &PathBuf, regex: &Regex, counter: Arc<Mutex<i32>>){
     //println!("aaa");
     let mut ranges: Vec<Range<usize>>= Vec::new();
-    let content = fs::read_to_string(path);
+    let content = fs::read(path);
     match content {
         Err(error) => panic!("Problem reading the file: {:?}", error),
         Ok(content) => {
-            let contents_u8 = content.as_bytes();
-            if regex.is_match(contents_u8) {
+            if regex.is_match(&content) {
                 *counter.lock().unwrap() += 1;
                 let mut grep_res = GrepResult {
                     path: path.clone(),
-                    content: contents_u8.to_vec(),
+                    content: content.to_vec(),
                     ranges,
                     search_ctr: *counter.lock().unwrap() as usize,
                 };
-                for mat in regex.find_iter(contents_u8) {
+                for mat in regex.find_iter(&grep_res.content) {
                     grep_res.ranges.push(Range { start: mat.start(), end: mat.end() });
                 }
                 println!("{}", grep_res);
