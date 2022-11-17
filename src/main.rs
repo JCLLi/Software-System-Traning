@@ -37,7 +37,7 @@ fn main() {
         // Take all paths from the command line arguments, and map the paths to create PathBufs
         args.paths.iter().map(PathBuf::from).collect()
     };
-    
+
     let mut all_files: Vec<PathBuf> = Vec::new();
     for i in 0..paths.len(){
         test::ite(&mut all_files, &paths[i]);
@@ -91,6 +91,7 @@ fn main() {
             } 
         }
     }
+    // where to add the join function?
 }
 
 
