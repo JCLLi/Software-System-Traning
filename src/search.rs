@@ -16,7 +16,10 @@ pub fn print_with_channel(all_files: &Vec<PathBuf>, regex: &Regex) {
         loop {
             match rx.recv() {
                 Ok(grep_res) => println!("{}", grep_res), // printout the result
-                Err(_) => return,                         // return for killing a thread
+                Err(_) => {
+                    println!("\nChannel closed, program finished\n");
+                    return;
+                }                       // return for killing a thread
             }
         }
     });
@@ -31,7 +34,7 @@ pub fn print_with_channel(all_files: &Vec<PathBuf>, regex: &Regex) {
             if j >= all_files.len() {
                 // the sleep here is necessary, prevents the main function to end too fast killing all the undone threads
                 std::thread::sleep(Duration::from_millis(1));
-                return;
+                break;
             }
             let path = all_files[j].clone();
             let regex = regex.clone();
@@ -39,7 +42,7 @@ pub fn print_with_channel(all_files: &Vec<PathBuf>, regex: &Regex) {
             let tx = tx.clone();
 
             let search_thread = std::thread::spawn(move || {
-                let grep_result = search(&path, &regex, counter);
+                let grep_result = regex_search(&path, &regex, counter);
                 match grep_result {
                     Err(error) => {
                         if error == ErrorKind::InvalidInput {
@@ -47,32 +50,47 @@ pub fn print_with_channel(all_files: &Vec<PathBuf>, regex: &Regex) {
                         }
                     }
                     Ok(res) => {
-                        tx.send(res).unwrap();
+                        match tx.send(res){
+                            Err(err) => {
+                                println!("\n!!!Error happened with tx of channel, program is ended with error {}!!!\n", err);
+                                return;
+                            },
+                            _ => (),
+                        }
                     }
                 }
             });
-
-            //search_thread.join().unwrap();
             thread_vec.push(search_thread);
         }
         for thread in thread_vec {
-            thread.join().unwrap();
+            match thread.join(){
+                Err(_) => {
+                    println!("\n!!!Error happened with thread join, program is ended with error!!!\n");
+                    return;
+                }
+                _ => (),
+            }
         }
+
     }
 }
 
-pub fn ite(entries: &mut Vec<PathBuf>, path: &Path) -> io::Result<()> {
-    let mut temp = fs::read_dir(path)?
+pub fn find_path(entries: &mut Vec<PathBuf>, path: &Path, filter: &Option<String>) -> io::Result<()> {
+    let mut path_set = fs::read_dir(path)?
         .map(|res| res.map(|e| e.path()))
         .collect::<Result<Vec<_>, io::Error>>()?;
 
-    temp.sort();
-    for path in &temp {
+    path_set.sort();
+
+    for path in &path_set {
         if path.is_dir() {
-            let res = ite(entries, path);
+            let res = find_path(entries, path, filter);
             match res {
                 Ok(_) => (),
-                Err(err) => panic!("This is not a valid path, error is {}", err),
+                Err(err) => {
+                    return Err(err);
+                }
+
             }
         } else {
             entries.push(path.clone());
@@ -80,7 +98,7 @@ pub fn ite(entries: &mut Vec<PathBuf>, path: &Path) -> io::Result<()> {
     }
     Ok(())
 }
-pub fn search(
+pub fn regex_search(
     path: &PathBuf,
     regex: &Regex,
     counter: Arc<Mutex<i32>>,

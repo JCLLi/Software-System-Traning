@@ -1,7 +1,6 @@
-mod test;
-use crate::test::print_with_channel;
+mod search;
+use crate::search::{find_path, print_with_channel};
 use clap::Parser;
-use core::panic;
 use regex::bytes::Regex;
 use std::fmt::{Display, Formatter};
 use std::ops::Range;
@@ -24,27 +23,32 @@ struct Args {
 fn main() {
     //Parse arguments, using the clap crate
     let args: Args = Args::parse();
-    let regex = Regex::new(&args.regex).unwrap();
+    if let Ok(regex) = Regex::new(&args.regex){
+        // Get the paths that we should search
+        let paths = if args.paths.is_empty() {
+            //If no paths were provided, we search the current path
+            vec![std::env::current_dir().unwrap()]
+        } else {
+            // Take all paths from the command line arguments, and map the paths to create PathBufs
+            args.paths.iter().map(PathBuf::from).collect()
+        };
 
-    // Get the paths that we should search
-    let paths = if args.paths.is_empty() {
-        //If no paths were provided, we search the current path
-        vec![std::env::current_dir().unwrap()]
-    } else {
-        // Take all paths from the command line arguments, and map the paths to create PathBufs
-        args.paths.iter().map(PathBuf::from).collect()
-    };
-
-    let mut all_files: Vec<PathBuf> = Vec::new();
-    for folder_path in &paths {
-        let res = test::ite(&mut all_files, folder_path);
-        match res {
-            Ok(_) => {}
-            Err(err) => panic!("The error is {}", err),
+        let filter = args.filter;
+        let mut all_files: Vec<PathBuf> = Vec::new();
+        for folder_path in &paths {
+            let res = find_path(&mut all_files, folder_path, &filter);
+            match res {
+                Ok(_) => {}
+                Err(err) => { println!("\n!!!The folder can not be read, please check if your paths are correct, program is ended with error {}!!!\n", err);
+                    return; },
+            }
         }
-    }
 
-    print_with_channel(&all_files, &regex);
+        print_with_channel(&all_files, &regex);
+    }else{
+        println!("\n!!!Invalid unicode input, please check your input! The program is ended!!!\n");
+        return;
+    }
 }
 
 /// This structure represents the matches that the tool found in **a single file**.
