@@ -6,9 +6,10 @@ use std::fmt::{Display, Formatter};
 use std::ops::Range;
 use std::path::PathBuf;
 use std::sync::{mpsc, Mutex, Arc};
-use std::fs;
+use std::{fs, thread};
 use std::thread::available_parallelism;
 use std::time::Duration;
+use crate::test::{print_with_channel, search};
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
@@ -47,62 +48,7 @@ fn main() {
         }
     }
 
-    let (tx, rx) = mpsc::channel();
-
-   std::thread::spawn(move||{
-        loop{
-            match rx.recv() {
-                Ok(grep_res) => println!("{}", grep_res), // printout the result
-                Err(_) => return, // return for killing a thread 
-            }
-        }
-    });
-
-    let core_num = available_parallelism().unwrap().get();
-
-    let counter = Arc::new(Mutex::new(0));
-
-    for i in (0..all_files.len()).step_by(core_num) {
-        // let mut thread_vec = Vec::new();
-        for j in i..i+core_num {
-            if j >= all_files.len() {
-                // the sleep here is necessary, prevents the main function to end too fast killing all the undone threads
-                std::thread::sleep(Duration::from_millis(1));
-                return;
-            }
-            let path = all_files[j].clone();
-            let regex = regex.clone();
-            let counter = counter.clone();
-            let tx = tx.clone();
-            let ranges: Vec<Range<usize>>= Vec::new();
-            let content = fs::read(&path);
-            match content {
-                Err(error) => panic!("Problem reading the file: {:?}", error),
-                Ok(content) => {
-                    let search_thread = std::thread::spawn(move||{
-                        if regex.is_match(&content) {
-                            let mut grep_res = GrepResult {
-                                path: path.clone(),
-                                content: content.to_vec(),
-                                ranges,
-                                search_ctr: *counter.lock().unwrap() as usize,
-                            };
-                            *counter.lock().unwrap() += 1;
-                            for mat in regex.find_iter(&grep_res.content) {
-                                grep_res.ranges.push(Range { start: mat.start(), end: mat.end() });
-                            }
-                            tx.send(grep_res).unwrap();
-                        }
-                    });
-                    search_thread.join().unwrap();
-                    // thread_vec.push(search_thread);
-                }
-            }
-        }
-        // for thread in thread_vec {
-        //     thread.join().unwrap();
-        // }   
-    }
+    print_with_channel(&all_files, &regex);
 }
 
 
@@ -111,7 +57,7 @@ fn main() {
 /// This structure represents the matches that the tool found in **a single file**.
 /// It implements `Display`, so it can be pretty-printed.
 /// This struct and the `Display` trait implementation do NOT need to be edited.
-struct GrepResult {
+pub struct GrepResult {
     /// the path of the search result
     path: PathBuf,
 
