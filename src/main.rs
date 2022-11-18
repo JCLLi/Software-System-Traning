@@ -67,7 +67,7 @@ fn main() {
         for j in i..i+core_num {
             if j >= all_files.len() {
                 // the sleep here is necessary, prevents the main function to end too fast killing all the undone threads
-                std::thread::sleep(Duration::from_millis(100));
+                std::thread::sleep(Duration::from_millis(1));
                 return;
             }
             let path = all_files[j].clone();
@@ -87,11 +87,11 @@ fn main() {
                                 ranges,
                                 search_ctr: *counter.lock().unwrap() as usize,
                             };
+                            *counter.lock().unwrap() += 1;
                             for mat in regex.find_iter(&grep_res.content) {
                                 grep_res.ranges.push(Range { start: mat.start(), end: mat.end() });
                             }
                             tx.send(grep_res).unwrap();
-                            *counter.lock().unwrap() += 1;
                         }
                     });
                     thread_vec.push(search_thread);
