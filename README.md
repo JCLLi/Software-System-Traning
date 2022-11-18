@@ -10,21 +10,21 @@ on [the website](https://software-fundamentals.pages.ewi.tudelft.nl/software-sys
 - [x] Make sure the `search_ctr` numbers during printing are in increasing order.
 - [x] Make sure the output is well-formed.
 - [x] Be concurrent, that is, should use multiple threads.
-- [ ] Be thread safe. Any pattern that may work for a limited input, or which depends on being lucky with how the scheduler schedules your threads is considered incorrect.
+- [x] Be thread safe. Any pattern that may work for a limited input, or which depends on being lucky with how the scheduler schedules your threads is considered incorrect.
 - [x] Use at least one `Mutex` or `RwLock` in a non-trivial way (i.e. you don't simply construct a `Mutex` and never use it).
 - [x] Use at least one non-trivial channel.
 - [x] Not use any other libraries besides regex and clap without explicit permissions from a TA.
-- [ ] Not use any unsafe code.
-- [ ] Compile on stable rust.
+- [x] Not use any unsafe code.
+- [x] Compile on stable rust.
 - [x] Use threads, and not rust's support for async and asynchronous programming.
 - [x] Dynamically determine how many threads it should use based on the amount of cores the system has. You must not spawn many times more threads than your system has cores. On large folders, you should not spawn millions of threads.
 
 ## Extra requirements
 ### If your application is faster than grep: 1.5 points
-- [ ] This is easier to achieve than you may expect, since grep is single-threaded.
-- [ ] We will test this by running both your tool and grep, and asking them to find the word torvalds in the linux source code. The tests will be run on the same computer, with multiple cores available.
+- [x] This is easier to achieve than you may expect, since grep is single-threaded.
+- [x] We will test this by running both your tool and grep, and asking them to find the word torvalds in the linux source code. The tests will be run on the same computer, with multiple cores available.
 ### Good error handling: 1.0 points
-- [ ] Your application needs to provide a user-friendly output when an unexpected situation occurs.
+- [x] Your application needs to provide a user-friendly output when an unexpected situation occurs.
 - [ ] For example, the user may provide an invalid regex, the program may encounter files that it does not have permission to read, or a file is deleted while the program is executing. This is not a full list.
 - [ ] The program should not contain any unwraps or expects that may fail. Provide user-friendly outputs.
 ### Implement path filtering: 1.0 points
