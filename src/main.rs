@@ -1,10 +1,15 @@
+mod test;
 use clap::Parser;
 use regex::bytes::Regex;
+use core::panic;
 use std::fmt::{Display, Formatter};
-use std::num::NonZeroUsize;
 use std::ops::Range;
 use std::path::PathBuf;
-use std::thread;
+use std::sync::{mpsc, Mutex, Arc};
+use std::{fs, thread};
+use std::thread::available_parallelism;
+use std::time::Duration;
+use crate::test::{print_with_channel, search};
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
@@ -34,13 +39,25 @@ fn main() {
         args.paths.iter().map(PathBuf::from).collect()
     };
 
-    todo!()
+    let mut all_files: Vec<PathBuf> = Vec::new();
+    for i in 0..paths.len(){
+        let res = test::ite(&mut all_files, &paths[i]);
+        match res {
+            Ok(_) => {},
+            Err(err) => panic!("The error is {}", err),
+        }
+    }
+
+    print_with_channel(&all_files, &regex);
 }
+
+
+
 
 /// This structure represents the matches that the tool found in **a single file**.
 /// It implements `Display`, so it can be pretty-printed.
 /// This struct and the `Display` trait implementation do NOT need to be edited.
-struct GrepResult {
+pub struct GrepResult {
     /// the path of the search result
     path: PathBuf,
 
