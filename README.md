@@ -20,24 +20,24 @@ on [the website](https://software-fundamentals.pages.ewi.tudelft.nl/software-sys
 - [ ] Dynamically determine how many threads it should use based on the amount of cores the system has. You must not spawn many times more threads than your system has cores. On large folders, you should not spawn millions of threads.
 
 ## Extra requirements
-If your application is faster than grep: 1.5 points
+### If your application is faster than grep: 1.5 points
 - [ ] This is easier to achieve than you may expect, since grep is single-threaded.
 - [ ] We will test this by running both your tool and grep, and asking them to find the word torvalds in the linux source code. The tests will be run on the same computer, with multiple cores available.
-Good error handling: 1.0 points
+### Good error handling: 1.0 points
 - [ ] Your application needs to provide a user-friendly output when an unexpected situation occurs.
 - [ ] For example, the user may provide an invalid regex, the program may encounter files that it does not have permission to read, or a file is deleted while the program is executing. This is not a full list.
 - [ ] The program should not contain any unwraps or expects that may fail. Provide user-friendly outputs.
-Implement path filtering: 1.0 points
+### Implement path filtering: 1.0 points
 - [ ] The program should only return results in files for which the file path matches the specified regex.
 - [ ] In order to do this, you will need to use the `filter` parameter in the `Args` struct.
 - [ ] For example, the command `cargo run -- -f ".*/file[12].txt" banana ./examples/example2` should only return the result in file 1, not in file 3:
-Analyse the performance of your implementation: 1.0 points
+### Analyse the performance of your implementation: 1.0 points
 - [ ] Submit a document of at most two pages, in which you present a performance analysis of your program.
 - [ ] Include a plot that shows the performance of the program over the number of threads that it was given.
 - [ ] Explain how you measured the performance, and how you prevented random fluctuations from affecting the result.
 - [ ] Include relevant information, such as the number of cores of the machine this was executed on and the dataset that was used.
 - [ ] Include the same command executed with `grep` as a baseline.
-Support for binary files: 1.0 points
+### Support for binary files: 1.0 points
 - [ ] Not all files in the directory may contain utf-8 text. The program should work correctly in these scenarios.
 - [ ] Note that a String can only contain utf-8 text, so you will have to use a Vec<u8> instead.
 - [ ] You need to use the bytes module of the regex crate for this. See https://docs.rs/regex/latest/regex/bytes/index.html for more.
