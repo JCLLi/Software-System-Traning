@@ -32,17 +32,17 @@ on [the website](https://software-fundamentals.pages.ewi.tudelft.nl/software-sys
 - [ ] In order to do this, you will need to use the `filter` parameter in the `Args` struct.
 - [ ] For example, the command `cargo run -- -f ".*/file[12].txt" banana ./examples/example2` should only return the result in file 1, not in file 3:
 ### Analyse the performance of your implementation: 1.0 points
-- [ ] Submit a document of at most two pages, in which you present a performance analysis of your program.
-- [ ] Include a plot that shows the performance of the program over the number of threads that it was given.
-- [ ] Explain how you measured the performance, and how you prevented random fluctuations from affecting the result.
-- [ ] Include relevant information, such as the number of cores of the machine this was executed on and the dataset that was used.
-- [ ] Include the same command executed with `grep` as a baseline.
+- [x] Submit a document of at most two pages, in which you present a performance analysis of your program.
+- [x] Include a plot that shows the performance of the program over the number of threads that it was given.
+- [x] Explain how you measured the performance, and how you prevented random fluctuations from affecting the result.
+- [x] Include relevant information, such as the number of cores of the machine this was executed on and the dataset that was used.
+- [x] Include the same command executed with `grep` as a baseline.
 ### Support for binary files: 1.0 points
-- [ ] Not all files in the directory may contain utf-8 text. The program should work correctly in these scenarios.
-- [ ] Note that a String can only contain utf-8 text, so you will have to use a Vec<u8> instead.
-- [ ] You need to use the bytes module of the regex crate for this. See https://docs.rs/regex/latest/regex/bytes/index.html for more.
-- [ ] When printing, non-utf8 bytes should be replaced by the unicode replacement character. The String::from_utf8_lossy function does this. The Display implementation of GrepResult already uses this, so you don't need to change this.
-- [ ] In the example3 directory, you can find an example of a file with non-utf8 bytes. Note that your text editor may not enjoy these bytes. cargo run banana ./examples/example3/ should match the file. The expected result is:
+- [x] Not all files in the directory may contain utf-8 text. The program should work correctly in these scenarios.
+- [x] Note that a String can only contain utf-8 text, so you will have to use a Vec<u8> instead.
+- [x] You need to use the bytes module of the regex crate for this. See https://docs.rs/regex/latest/regex/bytes/index.html for more.
+- [x] When printing, non-utf8 bytes should be replaced by the unicode replacement character. The String::from_utf8_lossy function does this. The Display implementation of GrepResult already uses this, so you don't need to change this.
+- [x] In the example3 directory, you can find an example of a file with non-utf8 bytes. Note that your text editor may not enjoy these bytes. cargo run banana ./examples/example3/ should match the file. The expected result is:
 `>>> (#0) ../template/examples/example3/test.bin`
 `�banana�`
 ` ^^^^^^`
