@@ -4,20 +4,20 @@ on [the website](https://software-fundamentals.pages.ewi.tudelft.nl/software-sys
 # Assignment 1 for Software Systems
 
 ## Baseline requirements
-- [ ] Be able to search a file or directory for all occurrences of a regex pattern.
-- [ ] Print output while it is searching. (It shouldn't buffer the results and print them at the end)
-- [ ] Print the results only using the provided `Display` implementation. Results should be put into `GrepResult` structs and printed. This will make sure their formatting is consistent.
-- [ ] Make sure the `search_ctr` numbers during printing are in increasing order.
-- [ ] Make sure the output is well-formed.
-- [ ] Be concurrent, that is, should use multiple threads.
+- [x] Be able to search a file or directory for all occurrences of a regex pattern.
+- [x] Print output while it is searching. (It shouldn't buffer the results and print them at the end)
+- [x] Print the results only using the provided `Display` implementation. Results should be put into `GrepResult` structs and printed. This will make sure their formatting is consistent.
+- [x] Make sure the `search_ctr` numbers during printing are in increasing order.
+- [x] Make sure the output is well-formed.
+- [x] Be concurrent, that is, should use multiple threads.
 - [ ] Be thread safe. Any pattern that may work for a limited input, or which depends on being lucky with how the scheduler schedules your threads is considered incorrect.
-- [ ] Use at least one `Mutex` or `RwLock` in a non-trivial way (i.e. you don't simply construct a `Mutex` and never use it).
-- [ ] Use at least one non-trivial channel.
-- [ ] Not use any other libraries besides regex and clap without explicit permissions from a TA.
+- [x] Use at least one `Mutex` or `RwLock` in a non-trivial way (i.e. you don't simply construct a `Mutex` and never use it).
+- [x] Use at least one non-trivial channel.
+- [x] Not use any other libraries besides regex and clap without explicit permissions from a TA.
 - [ ] Not use any unsafe code.
 - [ ] Compile on stable rust.
-- [ ] Use threads, and not rust's support for async and asynchronous programming.
-- [ ] Dynamically determine how many threads it should use based on the amount of cores the system has. You must not spawn many times more threads than your system has cores. On large folders, you should not spawn millions of threads.
+- [x] Use threads, and not rust's support for async and asynchronous programming.
+- [x] Dynamically determine how many threads it should use based on the amount of cores the system has. You must not spawn many times more threads than your system has cores. On large folders, you should not spawn millions of threads.
 
 ## Extra requirements
 ### If your application is faster than grep: 1.5 points
