@@ -1,24 +1,22 @@
-use std::error::Error;
-use std::fmt::Display;
-use std::{io, thread};
-use std::fs::{self, DirEntry};
+use crate::GrepResult;
+use regex::bytes::Regex;
+use std::fs::{self};
 use std::io::ErrorKind;
 use std::ops::Range;
 use std::path::{Path, PathBuf};
-use std::sync::{Arc, mpsc, Mutex};
+use std::sync::{mpsc, Arc, Mutex};
 use std::thread::available_parallelism;
 use std::time::Duration;
-use regex::bytes::Regex;
-use crate::GrepResult;
+use std::{io, thread};
 
-pub fn print_with_channel(all_files: &Vec<PathBuf>, regex: &Regex){
+pub fn print_with_channel(all_files: &Vec<PathBuf>, regex: &Regex) {
     let (tx, rx) = mpsc::channel();
 
-    thread::spawn(move||{
-        loop{
+    thread::spawn(move || {
+        loop {
             match rx.recv() {
                 Ok(grep_res) => println!("{}", grep_res), // printout the result
-                Err(_) => return, // return for killing a thread
+                Err(_) => return,                         // return for killing a thread
             }
         }
     });
@@ -29,7 +27,7 @@ pub fn print_with_channel(all_files: &Vec<PathBuf>, regex: &Regex){
 
     for i in (0..all_files.len()).step_by(core_num) {
         let mut thread_vec = Vec::new();
-        for j in i..i+core_num {
+        for j in i..i + core_num {
             if j >= all_files.len() {
                 // the sleep here is necessary, prevents the main function to end too fast killing all the undone threads
                 std::thread::sleep(Duration::from_millis(1));
@@ -40,11 +38,17 @@ pub fn print_with_channel(all_files: &Vec<PathBuf>, regex: &Regex){
             let counter = counter.clone();
             let tx = tx.clone();
 
-            let search_thread = std::thread::spawn(move||{
-                let gr = search(&path, &regex, counter);
-                match gr {
-                    Err(_) => (),
-                    Ok(res) => {tx.send(res).unwrap();}
+            let search_thread = std::thread::spawn(move || {
+                let grep_result = search(&path, &regex, counter);
+                match grep_result {
+                    Err(error) => {
+                        if error == ErrorKind::InvalidInput {
+                            panic!("Can not read the file")
+                        }
+                    }
+                    Ok(res) => {
+                        tx.send(res).unwrap();
+                    }
                 }
             });
 
@@ -57,31 +61,36 @@ pub fn print_with_channel(all_files: &Vec<PathBuf>, regex: &Regex){
     }
 }
 
-pub fn ite(entries: &mut Vec<PathBuf>, path: &Path) -> io::Result<()>{
+pub fn ite(entries: &mut Vec<PathBuf>, path: &Path) -> io::Result<()> {
     let mut temp = fs::read_dir(path)?
         .map(|res| res.map(|e| e.path()))
         .collect::<Result<Vec<_>, io::Error>>()?;
 
     temp.sort();
-    for i in 0..temp.len(){
-        if temp[i].is_dir(){
-            ite(entries, &temp[i]);
-        }else{
-            entries.push(temp[i].clone());
+    for path in &temp {
+        if path.is_dir() {
+            let res = ite(entries, path);
+            match res {
+                Ok(_) => (),
+                Err(err) => panic!("This is not a valid path, error is {}", err),
+            }
+        } else {
+            entries.push(path.clone());
         }
-
     }
     Ok(())
 }
-pub fn search(path: &PathBuf, regex: &Regex, counter: Arc<Mutex<i32>>) -> Result<GrepResult, ErrorKind>{
-    //println!("aaa");
-    let mut ranges: Vec<Range<usize>>= Vec::new();
+pub fn search(
+    path: &PathBuf,
+    regex: &Regex,
+    counter: Arc<Mutex<i32>>,
+) -> Result<GrepResult, ErrorKind> {
+    let ranges: Vec<Range<usize>> = Vec::new();
     let content = fs::read(path);
     match content {
-        Err(error) => Err(ErrorKind::Interrupted),
+        Err(_) => Err(ErrorKind::InvalidInput),
         Ok(content) => {
             if regex.is_match(&content) {
-
                 let mut grep_res = GrepResult {
                     path: path.clone(),
                     content: content.to_vec(),
@@ -90,70 +99,15 @@ pub fn search(path: &PathBuf, regex: &Regex, counter: Arc<Mutex<i32>>) -> Result
                 };
                 *counter.lock().unwrap() += 1;
                 for mat in regex.find_iter(&grep_res.content) {
-                    grep_res.ranges.push(Range { start: mat.start(), end: mat.end() });
+                    grep_res.ranges.push(Range {
+                        start: mat.start(),
+                        end: mat.end(),
+                    });
                 }
                 Ok(grep_res)
+            } else {
+                Err(ErrorKind::InvalidData)
             }
-            else { Err(ErrorKind::InvalidData) }
         }
     }
-}
-
-pub fn printout(entries: &Vec<PathBuf>, regex: Regex){
-    let counter = Arc::new(Mutex::new(0));
-    let loop_times = entries.len() / 2;
-    let loop_left = entries.len() % 2;
-    if loop_times == 0{
-        let c = counter.clone();
-        let path = entries[entries.len() - 1].clone();
-        let regex = regex.clone();
-        let t = thread::spawn(move || {
-            let gr = search(&path, &regex, c);
-            match gr {
-                Err(_) => (),
-                Ok(res) => println!("{}", res),
-            }
-        });
-        t.join().unwrap();
-    }
-    else {
-        for i in 0..loop_times{
-            let (c1, c2) = (counter.clone(), counter.clone());
-            let path1 = entries[i * 2].clone();
-            let path2 = entries[i * 2 + 1].clone();
-            let regex1 = regex.clone();
-            let regex2 = regex.clone();
-            let t1 = thread::spawn(move || {
-                let gr = search(&path1, &regex1, c1);
-                match gr {
-                    Err(_) => (),
-                    Ok(res) => println!("{}", res),
-                }
-            });
-            let t2 = thread::spawn(move || {
-                let a = search(&path2, &regex2, c2);
-                match a {
-                    Err(_) => (),
-                    Ok(res) => println!("{}", res),
-                }
-            });
-            t1.join().unwrap();
-            t2.join().unwrap();
-        }
-
-        if loop_left != 0 {
-            let c = counter.clone();
-            let path = entries[entries.len() - 1].clone();
-            let regex = regex.clone();
-            let t = thread::spawn(move || {
-                let a = search(&path, &regex, c);
-                match a {
-                    Err(_) => (),
-                    Ok(res) => println!("{}", res),
-                }
-            });
-            t.join().unwrap();
-        }
-    }
-
 }

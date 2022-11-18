@@ -1,15 +1,11 @@
 mod test;
+use crate::test::print_with_channel;
 use clap::Parser;
-use regex::bytes::Regex;
 use core::panic;
+use regex::bytes::Regex;
 use std::fmt::{Display, Formatter};
 use std::ops::Range;
 use std::path::PathBuf;
-use std::sync::{mpsc, Mutex, Arc};
-use std::{fs, thread};
-use std::thread::available_parallelism;
-use std::time::Duration;
-use crate::test::{print_with_channel, search};
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
@@ -40,19 +36,16 @@ fn main() {
     };
 
     let mut all_files: Vec<PathBuf> = Vec::new();
-    for i in 0..paths.len(){
-        let res = test::ite(&mut all_files, &paths[i]);
+    for folder_path in &paths {
+        let res = test::ite(&mut all_files, folder_path);
         match res {
-            Ok(_) => {},
+            Ok(_) => {}
             Err(err) => panic!("The error is {}", err),
         }
     }
 
     print_with_channel(&all_files, &regex);
 }
-
-
-
 
 /// This structure represents the matches that the tool found in **a single file**.
 /// It implements `Display`, so it can be pretty-printed.
