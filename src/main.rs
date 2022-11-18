@@ -49,7 +49,7 @@ fn main() {
 
     let (tx, rx) = mpsc::channel();
 
-    std::thread::spawn(move||{
+   std::thread::spawn(move||{
         loop{
             match rx.recv() {
                 Ok(grep_res) => println!("{}", grep_res), // printout the result
@@ -63,7 +63,7 @@ fn main() {
     let counter = Arc::new(Mutex::new(0));
 
     for i in (0..all_files.len()).step_by(core_num) {
-        let mut thread_vec = Vec::new();
+        // let mut thread_vec = Vec::new();
         for j in i..i+core_num {
             if j >= all_files.len() {
                 // the sleep here is necessary, prevents the main function to end too fast killing all the undone threads
@@ -94,13 +94,14 @@ fn main() {
                             tx.send(grep_res).unwrap();
                         }
                     });
-                    thread_vec.push(search_thread);
+                    search_thread.join().unwrap();
+                    // thread_vec.push(search_thread);
                 }
             }
         }
-        for thread in thread_vec {
-            thread.join().unwrap();
-        }   
+        // for thread in thread_vec {
+        //     thread.join().unwrap();
+        // }   
     }
 }
 
