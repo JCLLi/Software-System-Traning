@@ -1,15 +1,14 @@
 mod test;
-
 use clap::Parser;
 use regex::bytes::Regex;
-use std::f32::consts::E;
+use core::panic;
 use std::fmt::{Display, Formatter};
-use std::num::NonZeroUsize;
 use std::ops::Range;
 use std::path::PathBuf;
 use std::sync::{mpsc, Mutex, Arc};
 use std::fs;
 use std::thread::available_parallelism;
+use std::time::Duration;
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
@@ -41,9 +40,10 @@ fn main() {
 
     let mut all_files: Vec<PathBuf> = Vec::new();
     for i in 0..paths.len(){
-        match test::ite(&mut all_files, &paths[i]) {
-            Ok(_) => {}
-            Err(error) => panic!("The error is {}", error),
+        let res = test::ite(&mut all_files, &paths[i]);
+        match res {
+            Ok(_) => {},
+            Err(err) => panic!("The error is {}", err),
         }
     }
 
@@ -65,7 +65,9 @@ fn main() {
     for i in (0..all_files.len()).step_by(core_num) {
         let mut thread_vec = Vec::new();
         for j in i..i+core_num {
-            if j > all_files.len() {
+            if j >= all_files.len() {
+                // the sleep here is necessary, prevents the main function to end too fast killing all the undone threads
+                std::thread::sleep(Duration::from_millis(100));
                 return;
             }
             let path = all_files[j].clone();
@@ -77,9 +79,8 @@ fn main() {
             match content {
                 Err(error) => panic!("Problem reading the file: {:?}", error),
                 Ok(content) => {
-                    let thread = std::thread::spawn(move||{
+                    let search_thread = std::thread::spawn(move||{
                         if regex.is_match(&content) {
-                            *counter.lock().unwrap() += 1;
                             let mut grep_res = GrepResult {
                                 path: path.clone(),
                                 content: content.to_vec(),
@@ -90,16 +91,16 @@ fn main() {
                                 grep_res.ranges.push(Range { start: mat.start(), end: mat.end() });
                             }
                             tx.send(grep_res).unwrap();
+                            *counter.lock().unwrap() += 1;
                         }
                     });
-                    thread_vec.push(thread);
+                    thread_vec.push(search_thread);
                 }
             }
         }
-        // to wait for threads to end
         for thread in thread_vec {
             thread.join().unwrap();
-        }
+        }   
     }
 }
 
