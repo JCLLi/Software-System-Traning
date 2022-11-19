@@ -74,17 +74,54 @@ pub fn print_with_channel(all_files: &Vec<PathBuf>, regex: &Regex) {
 
     }
 }
-
-pub fn find_path(entries: &mut Vec<PathBuf>, path: &Path, filter: &Option<String>) -> io::Result<()> {
+pub fn find(entries: &mut Vec<PathBuf>, path: &Path, filter: &String, filtered_path: &mut Vec<PathBuf>) -> io::Result<()> {
     let mut path_set = fs::read_dir(path)?
         .map(|res| res.map(|e| e.path()))
         .collect::<Result<Vec<_>, io::Error>>()?;
 
     path_set.sort();
+    let key = Regex::new(&filter);
+    match key {
+        Ok(key) => {
+            println!("{}", key);
+            for i in 0..path_set.len(){
+                if key.is_match(path_set[i].to_str().unwrap().as_bytes()) {
+                    filtered_path.push(path_set[i].clone());
+                }
+            }
 
+        }
+        Err(err) => {
+            println!("AAA");
+        }
+    }
+
+    Ok(())
+}
+
+pub fn find_path(entries: &mut Vec<PathBuf>, path: &Path, filter: &String, filtered_path: &mut Vec<PathBuf>) -> io::Result<()> {
+    let mut path_set = fs::read_dir(path)?
+        .map(|res| res.map(|e| e.path()))
+        .collect::<Result<Vec<_>, io::Error>>()?;
+
+    path_set.sort();
+    // let key = Regex::new(&filter);
+    // match key {
+    //     Ok(key) => {
+    //         for i in 0..path_set.len(){
+    //             if key.is_match(path_set[i].to_str().unwrap().as_bytes()) {
+    //                 filtered_path.push(path_set[i].clone());
+    //             }
+    //         }
+    //
+    //     }
+    //     Err(err) => {
+    //         println!("AAA");
+    //     }
+    // }
     for path in &path_set {
         if path.is_dir() {
-            let res = find_path(entries, path, filter);
+            let res = find_path(entries, path, filter, filtered_path);
             match res {
                 Ok(_) => (),
                 Err(err) => {
@@ -98,6 +135,8 @@ pub fn find_path(entries: &mut Vec<PathBuf>, path: &Path, filter: &Option<String
     }
     Ok(())
 }
+
+
 pub fn regex_search(
     path: &PathBuf,
     regex: &Regex,
