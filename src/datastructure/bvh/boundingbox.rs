@@ -209,8 +209,6 @@ impl BoundingBox {
 #[cfg(test)]
 pub mod tests {
     use crate::datastructure::bvh::boundingbox::BoundingBox;
-    use crate::scene::scene::Mesh;
-    use crate::scene::triangle::Triangle;
     use crate::util::vector::Vector;
 
     #[test]
@@ -218,28 +216,5 @@ pub mod tests {
         let bb = BoundingBox::new(Vector::new(0., 0., 0.), Vector::new(1., 1., 1.));
         assert_eq!(bb.min, Vector::new(0., 0., 0.));
         assert_eq!(bb.max, Vector::new(1., 1., 1.));
-    }
-
-    #[test]
-    fn test_include_point() {
-        let bb = BoundingBox::EMPTY;
-
-        let ibb = bb
-            .includes_point(&Vector::new(0., 0., 0.))
-            .includes_point(Vector::new(1., 1., 1.));
-
-        assert_eq!(ibb.min, Vector::new(0., 0., 0.));
-        assert_eq!(ibb.max, Vector::new(1., 1., 1.));
-    }
-
-    #[test]
-    fn test_merge() {
-        let bb1 = BoundingBox::new(Vector::new(-5., -2., 0.), Vector::new(7., 4., 4.));
-        let bb2 = BoundingBox::new(Vector::new(8., -7., -2.), Vector::new(14., 2., 8.));
-
-        let bb3 = bb1.merge(&bb2);
-
-        assert_eq!(bb3.min, Vector::new(-5., -7., -2.));
-        assert_eq!(bb3.max, Vector::new(14., 4., 8.));
     }
 }
