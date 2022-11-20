@@ -14,7 +14,7 @@ pub mod util;
 pub fn main() {
     simple_logging::log_to_stderr(LevelFilter::Info);
 
-    Config::load("configurations/monte-carlo.yml")
+    Config::load("configurations/reference.yml")
         .unwrap()
         .run()
         .unwrap();
