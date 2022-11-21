@@ -10,6 +10,16 @@ use std::thread::available_parallelism;
 use std::time::Duration;
 use std::{io, thread};
 
+
+/// Print the every result which matches the regex.
+///
+/// # Arguments
+///
+/// * `all_files` - a vector with all file paths in it.
+/// * `regex` - the regex needs to be searched in files.
+///
+/// # Return
+/// Nothing is returned
 pub fn print_with_channel(all_files: &Vec<PathBuf>, regex: &Regex) {
     let (tx, rx) = mpsc::channel();
 
@@ -69,6 +79,17 @@ pub fn print_with_channel(all_files: &Vec<PathBuf>, regex: &Regex) {
         }
     }
 }
+
+/// Print the every result which matches the regex.
+///
+/// # Arguments
+///
+/// * `entries` - a vector with all file paths in it.
+/// * `path` - the path input by users.
+/// * `filter` - the keyword of filter.
+///
+/// # Return
+/// * `io::Result<()>` - return IO errors when the path input by user is wrong.
 pub fn find_path(
     entries: &mut Vec<PathBuf>,
     path: &Path,
@@ -132,6 +153,17 @@ pub fn find_path(
     Ok(())
 }
 
+/// Print the every result which matches the regex.
+///
+/// # Arguments
+///
+/// * `path` - one of the file paths in the aim folder.
+/// * `regex` - the regex needs to be searched in files.
+/// * `counter` - how many files with regex are found.
+///
+/// # Return
+/// * `Result<GrepResult, ErrorKind>` - return errors when the file can not be read or the a
+///    GrepResult when there are regex matches.
 pub fn regex_search(
     path: &PathBuf,
     regex: &Regex,
