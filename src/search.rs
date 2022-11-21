@@ -9,7 +9,6 @@ use std::thread::available_parallelism;
 use std::time::Duration;
 use std::{io, thread};
 use std::process::exit;
-use std::path::MAIN_SEPARATOR;
 
 pub fn print_with_channel(all_files: &Vec<PathBuf>, regex: &Regex) {
     let (tx, rx) = mpsc::channel();
@@ -83,20 +82,20 @@ pub fn find_path(entries: &mut Vec<PathBuf>, path: &Path, filter: &Option<String
 
     path_set.sort();
 
-    // let a = PathBuf::from("./examples/example2/file1.txt");
-    // let b = PathBuf::from("./examples/example2/file2.txt");
-    // let c = PathBuf::from("./examples/example2/dir/file3.txt");
-    // let d = PathBuf::from("./examples/example2/dir/file4.txt");
-    //
-    // let mut qq = Vec::new();
-    // qq.push(a);
-    // qq.push(b);
-    // qq.push(c);
-    // qq.push(d);
+    let a = PathBuf::from("./examples/example2/file1.txt");
+    let b = PathBuf::from("./examples/example2/file2.txt");
+    let c = PathBuf::from("./examples/example2/dir/file3.txt");
+    let d = PathBuf::from("./examples/example2/dir/file4.txt");
 
-    for i in 0..path_set.len(){
-        println!("path:{}", path_set[i].to_str().unwrap());
-    }
+    let mut qq = Vec::new();
+    qq.push(a);
+    qq.push(b);
+    qq.push(c);
+    qq.push(d);
+
+    // for i in 0..path_set.len(){
+    //     println!("path:{}", path_set[i].to_str().unwrap());
+    // }
 
     match filter{
         Some(filter_content) => {
