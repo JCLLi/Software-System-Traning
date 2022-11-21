@@ -5,6 +5,7 @@ use regex::bytes::Regex;
 use std::fmt::{Display, Formatter};
 use std::ops::Range;
 use std::path::PathBuf;
+use std::process::exit;
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
@@ -23,7 +24,7 @@ struct Args {
 fn main() {
     //Parse arguments, using the clap crate
     let args: Args = Args::parse();
-    if let Ok(regex) = Regex::new(&args.regex){
+    if let Ok(regex) = Regex::new(&args.regex) {
         // Get the paths that we should search
         let paths = if args.paths.is_empty() {
             //If no paths were provided, we search the current path
@@ -36,28 +37,21 @@ fn main() {
         let filter = args.filter;
 
         let mut all_files: Vec<PathBuf> = Vec::new();
-        let mut filtered_path: Vec<PathBuf> = Vec::new();
         for folder_path in &paths {
             let res = find_path(&mut all_files, folder_path, &filter);
             match res {
                 Ok(_) => {}
-                Err(err) => { println!("\n!!!The folder can not be read, please check if your paths are correct, program is ended with error {}!!!\n", err);
-                    return;
-                },
+                Err(err) => {
+                    println!("\n!!!The folder can not be read, please check if your paths are correct, program is ended with error {}!!!\n", err);
+                    exit(0);
+                }
             }
         }
 
-
-        for i in 0..all_files.len(){
-            println!("path:{}", all_files[i].to_str().unwrap());
-        }
-        // for i in 0..all_files.len(){
-        //     println!("path:{}", all_files[i].to_str().unwrap());
-        // }
-        //print_with_channel(&all_files, &regex);
-    }else{
+        print_with_channel(&all_files, &regex);
+    } else {
         println!("\n!!!Invalid regex, please check your input! The program is ended!!!\n");
-        return;
+        exit(0);
     }
 }
 

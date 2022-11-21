@@ -4,11 +4,11 @@ use std::fs::{self};
 use std::io::ErrorKind;
 use std::ops::Range;
 use std::path::{Path, PathBuf};
+use std::process::exit;
 use std::sync::{mpsc, Arc, Mutex};
 use std::thread::available_parallelism;
 use std::time::Duration;
 use std::{io, thread};
-use std::process::exit;
 
 pub fn print_with_channel(all_files: &Vec<PathBuf>, regex: &Regex) {
     let (tx, rx) = mpsc::channel();
@@ -19,8 +19,8 @@ pub fn print_with_channel(all_files: &Vec<PathBuf>, regex: &Regex) {
                 Ok(grep_res) => println!("{}", grep_res), // printout the result
                 Err(_) => {
                     println!("\nChannel closed, program finished\n");
-                    return;
-                }                       // return for killing a thread
+                    exit(0);
+                } // return for killing a thread
             }
         }
     });
@@ -47,16 +47,14 @@ pub fn print_with_channel(all_files: &Vec<PathBuf>, regex: &Regex) {
                 match grep_result {
                     Err(error) => {
                         if error == ErrorKind::InvalidInput {
-                            panic!("Can not read the file")
+                            println!("\n!!!Can not read the file, program is ended!!!\n");
+                            exit(0);
                         }
                     }
                     Ok(res) => {
-                        match tx.send(res){
-                            Err(err) => {
-                                println!("\n!!!Error happened with tx of channel, program is ended with error {}!!!\n", err);
-                                return;
-                            },
-                            _ => (),
+                        if let Err(err) = tx.send(res) {
+                            println!("\n!!!Error happened with tx of channel, program is ended with error {}!!!\n", err);
+                            exit(0);
                         }
                     }
                 }
@@ -64,43 +62,28 @@ pub fn print_with_channel(all_files: &Vec<PathBuf>, regex: &Regex) {
             thread_vec.push(search_thread);
         }
         for thread in thread_vec {
-            match thread.join(){
-                Err(_) => {
-                    println!("\n!!!Error happened with thread join, program is ended with error!!!\n");
-                    return;
-                }
-                _ => (),
+            if thread.join().is_err() {
+                println!("\n!!!Error happened with thread join, program is ended with error!!!\n");
+                exit(0);
             }
         }
-
     }
 }
-pub fn find_path(entries: &mut Vec<PathBuf>, path: &Path, filter: &Option<String>) -> io::Result<()> {
+pub fn find_path(
+    entries: &mut Vec<PathBuf>,
+    path: &Path,
+    filter: &Option<String>,
+) -> io::Result<()> {
     let mut path_set = fs::read_dir(path)?
         .map(|res| res.map(|e| e.path()))
         .collect::<Result<Vec<_>, io::Error>>()?;
 
     path_set.sort();
 
-    let a = PathBuf::from("./examples/example2/file1.txt");
-    let b = PathBuf::from("./examples/example2/file2.txt");
-    let c = PathBuf::from("./examples/example2/dir/file3.txt");
-    let d = PathBuf::from("./examples/example2/dir/file4.txt");
-
-    let mut qq = Vec::new();
-    qq.push(a);
-    qq.push(b);
-    qq.push(c);
-    qq.push(d);
-
-    // for i in 0..path_set.len(){
-    //     println!("path:{}", path_set[i].to_str().unwrap());
-    // }
-
-    match filter{
+    match filter {
         Some(filter_content) => {
-            for path in &qq {
-                if path.is_dir(){
+            for path in &path_set {
+                if path.is_dir() {
                     let res = find_path(entries, path, filter);
                     match res {
                         Ok(_) => (),
@@ -108,16 +91,22 @@ pub fn find_path(entries: &mut Vec<PathBuf>, path: &Path, filter: &Option<String
                             return Err(err);
                         }
                     }
-                }else {
-                    let key = Regex::new(&filter_content);
+                } else {
+                    let key = Regex::new(filter_content);
                     match key {
-                        Ok(key) => {
-                            if key.is_match(path.to_str().unwrap().as_bytes()) {
-                                entries.push(path.clone());
+                        Ok(key) => match path.to_str() {
+                            Some(unwrap_path) => {
+                                if key.is_match(unwrap_path.as_bytes()) {
+                                    entries.push(path.clone());
+                                }
                             }
-                        }
-                        Err(err) => {
-                            println!("Invalid filter keywords, please check if your paths are correct, program is ended");
+                            None => {
+                                println!("\n!!!Invalid path, please check if the path is right, program is ended!!!\n");
+                                exit(0);
+                            }
+                        },
+                        Err(_) => {
+                            println!("\n!!!Invalid filter keywords, please check if your paths are correct, program is ended!!!\n");
                             exit(0);
                         }
                     }
