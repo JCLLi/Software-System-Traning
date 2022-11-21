@@ -82,16 +82,16 @@ pub fn find_path(entries: &mut Vec<PathBuf>, path: &Path, filter: &Option<String
 
     path_set.sort();
 
-    let a = PathBuf::from("./examples/example2/file1.txt");
-    let b = PathBuf::from("./examples/example2/file2.txt");
-    let c = PathBuf::from("./examples/example2/dir/file3.txt");
-    let d = PathBuf::from("./examples/example2/dir/file4.txt");
-
-    let mut qq = Vec::new();
-    qq.push(a);
-    qq.push(b);
-    qq.push(c);
-    qq.push(d);
+    // let a = PathBuf::from("./examples/example2/file1.txt");
+    // let b = PathBuf::from("./examples/example2/file2.txt");
+    // let c = PathBuf::from("./examples/example2/dir/file3.txt");
+    // let d = PathBuf::from("./examples/example2/dir/file4.txt");
+    //
+    // let mut qq = Vec::new();
+    // qq.push(a);
+    // qq.push(b);
+    // qq.push(c);
+    // qq.push(d);
 
     // for i in 0..path_set.len(){
     //     println!("path:{}", path_set[i].to_str().unwrap());
@@ -113,8 +113,8 @@ pub fn find_path(entries: &mut Vec<PathBuf>, path: &Path, filter: &Option<String
                     match key {
                         Ok(key) => {
                             for i in 0..path_set.len(){
-                                if key.is_match(path_set[i].to_str().unwrap().as_bytes()) {
-                                    entries.push(path_set[i].clone());
+                                if key.is_match(path.to_str().unwrap().as_bytes()) {
+                                    entries.push(path.clone());
                                 }
                             }
                         }
