@@ -82,16 +82,16 @@ pub fn find_path(entries: &mut Vec<PathBuf>, path: &Path, filter: &Option<String
 
     path_set.sort();
 
-    // let a = PathBuf::from("./examples/example2/file1.txt");
-    // let b = PathBuf::from("./examples/example2/file2.txt");
-    // let c = PathBuf::from("./examples/example2/dir/file3.txt");
-    // let d = PathBuf::from("./examples/example2/dir/file4.txt");
-    //
-    // let mut qq = Vec::new();
-    // qq.push(a);
-    // qq.push(b);
-    // qq.push(c);
-    // qq.push(d);
+    let a = PathBuf::from("./examples/example2/file1.txt");
+    let b = PathBuf::from("./examples/example2/file2.txt");
+    let c = PathBuf::from("./examples/example2/dir/file3.txt");
+    let d = PathBuf::from("./examples/example2/dir/file4.txt");
+
+    let mut qq = Vec::new();
+    qq.push(a);
+    qq.push(b);
+    qq.push(c);
+    qq.push(d);
 
     // for i in 0..path_set.len(){
     //     println!("path:{}", path_set[i].to_str().unwrap());
@@ -99,7 +99,7 @@ pub fn find_path(entries: &mut Vec<PathBuf>, path: &Path, filter: &Option<String
 
     match filter{
         Some(filter_content) => {
-            for path in &path_set {
+            for path in &qq {
                 if path.is_dir(){
                     let res = find_path(entries, path, filter);
                     match res {
@@ -112,10 +112,8 @@ pub fn find_path(entries: &mut Vec<PathBuf>, path: &Path, filter: &Option<String
                     let key = Regex::new(&filter_content);
                     match key {
                         Ok(key) => {
-                            for i in 0..path_set.len(){
-                                if key.is_match(path.to_str().unwrap().as_bytes()) {
-                                    entries.push(path.clone());
-                                }
+                            if key.is_match(path.to_str().unwrap().as_bytes()) {
+                                entries.push(path.clone());
                             }
                         }
                         Err(err) => {
