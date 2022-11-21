@@ -25,12 +25,12 @@ on [the website](https://software-fundamentals.pages.ewi.tudelft.nl/software-sys
 - [x] We will test this by running both your tool and grep, and asking them to find the word torvalds in the linux source code. The tests will be run on the same computer, with multiple cores available.
 ### Good error handling: 1.0 points
 - [x] Your application needs to provide a user-friendly output when an unexpected situation occurs.
-- [x] For example, the user may provide an invalid regex, the program may encounter files that it does not have permission to read, or a file is deleted while the program is executing. This is not a full list.
+- [ ] For example, the user may provide an invalid regex, the program may encounter files that it does not have permission to read, or a file is deleted while the program is executing. This is not a full list.
 - [x] The program should not contain any unwraps or expects that may fail. Provide user-friendly outputs.
 ### Implement path filtering: 1.0 points
-- [ ] The program should only return results in files for which the file path matches the specified regex.
-- [ ] In order to do this, you will need to use the `filter` parameter in the `Args` struct.
-- [ ] For example, the command `cargo run -- -f ".*/file[12].txt" banana ./examples/example2` should only return the result in file 1, not in file 3:
+- [x] The program should only return results in files for which the file path matches the specified regex.
+- [x] In order to do this, you will need to use the `filter` parameter in the `Args` struct.
+- [x] For example, the command `cargo run -- -f ".*/file[12].txt" banana ./examples/example2` should only return the result in file 1, not in file 3:
 ### Analyse the performance of your implementation: 1.0 points
 - [x] Submit a document of at most two pages, in which you present a performance analysis of your program.
 - [x] Include a plot that shows the performance of the program over the number of threads that it was given.
