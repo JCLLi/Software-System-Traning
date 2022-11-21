@@ -8,6 +8,8 @@ use std::sync::{mpsc, Arc, Mutex};
 use std::thread::available_parallelism;
 use std::time::Duration;
 use std::{io, thread};
+use std::process::exit;
+use std::path::MAIN_SEPARATOR;
 
 pub fn print_with_channel(all_files: &Vec<PathBuf>, regex: &Regex) {
     let (tx, rx) = mpsc::channel();
@@ -74,68 +76,75 @@ pub fn print_with_channel(all_files: &Vec<PathBuf>, regex: &Regex) {
 
     }
 }
-pub fn find(entries: &mut Vec<PathBuf>, path: &Path, filter: &String, filtered_path: &mut Vec<PathBuf>) -> io::Result<()> {
+pub fn find_path(entries: &mut Vec<PathBuf>, path: &Path, filter: &Option<String>) -> io::Result<()> {
     let mut path_set = fs::read_dir(path)?
         .map(|res| res.map(|e| e.path()))
         .collect::<Result<Vec<_>, io::Error>>()?;
 
     path_set.sort();
-    let key = Regex::new(&filter);
-    match key {
-        Ok(key) => {
-            println!("{}", key);
-            for i in 0..path_set.len(){
-                if key.is_match(path_set[i].to_str().unwrap().as_bytes()) {
-                    filtered_path.push(path_set[i].clone());
-                }
-            }
 
-        }
-        Err(err) => {
-            println!("AAA");
-        }
-    }
-
-    Ok(())
-}
-
-pub fn find_path(entries: &mut Vec<PathBuf>, path: &Path, filter: &String, filtered_path: &mut Vec<PathBuf>) -> io::Result<()> {
-    let mut path_set = fs::read_dir(path)?
-        .map(|res| res.map(|e| e.path()))
-        .collect::<Result<Vec<_>, io::Error>>()?;
-
-    path_set.sort();
-    // let key = Regex::new(&filter);
-    // match key {
-    //     Ok(key) => {
-    //         for i in 0..path_set.len(){
-    //             if key.is_match(path_set[i].to_str().unwrap().as_bytes()) {
-    //                 filtered_path.push(path_set[i].clone());
-    //             }
-    //         }
+    // let a = PathBuf::from("./examples/example2/file1.txt");
+    // let b = PathBuf::from("./examples/example2/file2.txt");
+    // let c = PathBuf::from("./examples/example2/dir/file3.txt");
+    // let d = PathBuf::from("./examples/example2/dir/file4.txt");
     //
-    //     }
-    //     Err(err) => {
-    //         println!("AAA");
-    //     }
-    // }
-    for path in &path_set {
-        if path.is_dir() {
-            let res = find_path(entries, path, filter, filtered_path);
-            match res {
-                Ok(_) => (),
-                Err(err) => {
-                    return Err(err);
-                }
+    // let mut qq = Vec::new();
+    // qq.push(a);
+    // qq.push(b);
+    // qq.push(c);
+    // qq.push(d);
 
+    for i in 0..path_set.len(){
+        println!("path:{}", path_set[i].to_str().unwrap());
+    }
+
+    match filter{
+        Some(filter_content) => {
+            for path in &path_set {
+                if path.is_dir(){
+                    let res = find_path(entries, path, filter);
+                    match res {
+                        Ok(_) => (),
+                        Err(err) => {
+                            return Err(err);
+                        }
+                    }
+                }else {
+                    let key = Regex::new(&filter_content);
+                    match key {
+                        Ok(key) => {
+                            for i in 0..path_set.len(){
+                                if key.is_match(path_set[i].to_str().unwrap().as_bytes()) {
+                                    entries.push(path_set[i].clone());
+                                }
+                            }
+                        }
+                        Err(err) => {
+                            println!("Invalid filter keywords, please check if your paths are correct, program is ended");
+                            exit(0);
+                        }
+                    }
+                }
             }
-        } else {
-            entries.push(path.clone());
+        }
+        None => {
+            for path in &path_set {
+                if path.is_dir() {
+                    let res = find_path(entries, path, filter);
+                    match res {
+                        Ok(_) => (),
+                        Err(err) => {
+                            return Err(err);
+                        }
+                    }
+                } else {
+                    entries.push(path.clone());
+                }
+            }
         }
     }
     Ok(())
 }
-
 
 pub fn regex_search(
     path: &PathBuf,

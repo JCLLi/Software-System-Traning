@@ -1,5 +1,5 @@
 mod search;
-use crate::search::{find, find_path, print_with_channel};
+use crate::search::{find_path, print_with_channel};
 use clap::Parser;
 use regex::bytes::Regex;
 use std::fmt::{Display, Formatter};
@@ -33,27 +33,30 @@ fn main() {
             args.paths.iter().map(PathBuf::from).collect()
         };
 
-        let filter = args.filter.unwrap();
+        let filter = args.filter;
 
         let mut all_files: Vec<PathBuf> = Vec::new();
         let mut filtered_path: Vec<PathBuf> = Vec::new();
         for folder_path in &paths {
-            let res = find(&mut all_files, folder_path, &filter, &mut filtered_path);
+            let res = find_path(&mut all_files, folder_path, &filter);
             match res {
                 Ok(_) => {}
                 Err(err) => { println!("\n!!!The folder can not be read, please check if your paths are correct, program is ended with error {}!!!\n", err);
-                    return; },
+                    return;
+                },
             }
         }
-        for i in 0..filtered_path.len(){
-            println!("path:{}", filtered_path[i].to_str().unwrap());
+
+
+        for i in 0..all_files.len(){
+            println!("path:{}", all_files[i].to_str().unwrap());
         }
         // for i in 0..all_files.len(){
         //     println!("path:{}", all_files[i].to_str().unwrap());
         // }
         //print_with_channel(&all_files, &regex);
     }else{
-        println!("\n!!!Invalid unicode input, please check your input! The program is ended!!!\n");
+        println!("\n!!!Invalid regex, please check your input! The program is ended!!!\n");
         return;
     }
 }
