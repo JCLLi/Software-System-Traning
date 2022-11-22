@@ -51,7 +51,7 @@ on [the website](https://software-fundamentals.pages.ewi.tudelft.nl/software-sys
 The analysis is done with a wide range of threads launched in the program. However, by default, the number of threads launched running the program differs among machines. It is equal to the maximum number of threads the machine could handle. In this case, 8 threads for MacBook and 16 threads for Dell.
 
 Besides the baseline, most of the extra requirements are met in our program. However the `Good error handling` is not certain whether it is fully realized, due to lack of verification.
-For most functions implemented, error handling with user friendly messages are included. Except the situation when the program encounters files that it does not have permission to read. It also remains unsure if every single potential error is dealt with properly.
+For most functions implemented, error handling with user friendly messages are included.
 
 Another issue regarding the performance of the program in respect to the number of threads launched in the program requires further analysis. The peak performance of the program reaches its peak performance on both machines with different operating systems when 128 and 64 threads are launched respectively. However, according to the CPU hardware parameters, the CPU in two machines should only be able to handle 16 threads and 8 threads at the same time. The answer to this issue remains unknown and requires further analysis.
 
