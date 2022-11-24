@@ -2,7 +2,7 @@ use crate::util::color::Color;
 use crate::util::vector::Vector;
 use bmp::{px, Image, Pixel};
 use std::fs::File;
-use std::io::Write;
+use std::io::{BufWriter, Write};
 
 use std::path::{Path, PathBuf};
 
@@ -60,12 +60,21 @@ impl OutputBuffer {
         self.buffer[y][x] = color;
 
         let mut f = File::create(self.backup_location.clone()).unwrap();
+        let mut buf = BufWriter::new(f);
         for row in &self.buffer {
             for column in row {
-                write!(f, "{}, {}, {};", column.x, column.y, column.z).unwrap();
-                f.flush().unwrap();
+                write!(buf, "{}, {}, {};", column.x, column.y, column.z);
             }
-            writeln!(f).unwrap();
+            writeln!(buf).unwrap();
+            buf.flush();
         }
+        // let mut f = File::create(self.backup_location.clone()).unwrap();
+        // for row in &self.buffer {
+        //     for column in row {
+        //         write!(f, "{}, {}, {};", column.x, column.y, column.z).unwrap();
+        //         f.flush().unwrap();
+        //     }
+        //     writeln!(f).unwrap();
+        // }
     }
 }
