@@ -14,3 +14,6 @@ rand = "0.7"
 serde_yaml = "0.8"
 serde = {version = "1", features = ["derive"]}
 thiserror = "1"
+
+[profile.release]
+debug = true

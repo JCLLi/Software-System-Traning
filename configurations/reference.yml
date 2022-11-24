@@ -24,9 +24,9 @@ camera:
     y: 0.0
     z: -1.0
   # The width of the image to be generated
-  width: 500
+  width: 100
   # The height of the image to be generated
-  height: 500
+  height: 100
   # The field of view of the camera
   fov: 60.0
 
@@ -36,4 +36,4 @@ generator:
       all
 
 raytracer:
-  samples_per_pixel: 200
+  samples_per_pixel: 50

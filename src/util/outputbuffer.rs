@@ -2,7 +2,7 @@ use crate::util::color::Color;
 use crate::util::vector::Vector;
 use bmp::{px, Image, Pixel};
 use std::fs::File;
-use std::io::Write;
+use std::io::{BufWriter, Write};
 
 use std::path::{Path, PathBuf};
 
@@ -56,16 +56,20 @@ impl OutputBuffer {
         img
     }
 
-    pub fn set_at(&mut self, x: usize, y: usize, color: Vector) {
+    pub fn set_at(&mut self, x: usize, y: usize, color: Vector, file: &mut File) {
         self.buffer[y][x] = color;
 
-        let mut f = File::create(self.backup_location.clone()).unwrap();
-        for row in &self.buffer {
-            for column in row {
-                write!(f, "{}, {}, {};", column.x, column.y, column.z).unwrap();
-                f.flush().unwrap();
-            }
-            writeln!(f).unwrap();
-        }
+        // let mut f = File::create(self.backup_location.clone()).unwrap();
+        let mut buf = BufWriter::new(file);
+        writeln!(buf, "{}, {}, {};", color.x, color.y, color.z);
+        buf.flush();
+        // let mut f = File::create(self.backup_location.clone()).unwrap();
+        // for row in &self.buffer {
+        //     for column in row {
+        //         write!(f, "{}, {}, {};", column.x, column.y, column.z).unwrap();
+        //         f.flush().unwrap();
+        //     }
+        //     writeln!(f).unwrap();
+        // }
     }
 }
