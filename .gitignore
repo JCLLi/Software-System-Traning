@@ -3,3 +3,4 @@ target/
 render.bmp
 backup.rgb
 .vscode
+perf.*
