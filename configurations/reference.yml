@@ -24,9 +24,9 @@ camera:
     y: 0.0
     z: -1.0
   # The width of the image to be generated
-  width: 50
+  width: 100
   # The height of the image to be generated
-  height: 50
+  height: 100
   # The field of view of the camera
   fov: 60.0
 

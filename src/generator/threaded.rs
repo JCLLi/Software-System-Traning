@@ -1,3 +1,4 @@
+use std::fs::File;
 use crate::generator::{Callback, Generator};
 use crate::util::camera::Camera;
 use crate::util::outputbuffer::OutputBuffer;
@@ -19,10 +20,11 @@ impl ThreadedGenerator {
 
 impl Generator for ThreadedGenerator {
     fn generate(&self, camera: &Camera, callback: &Callback) -> OutputBuffer {
+        let file_path = "backup.rgb";
         let output = Arc::new(Mutex::new(OutputBuffer::with_size(
             camera.width,
             camera.height,
-            "backup.rgb",
+            file_path,
         )));
 
         thread::scope(|s| {
@@ -41,6 +43,7 @@ impl Generator for ThreadedGenerator {
 
                 let local_output = Arc::clone(&output);
                 s.spawn(move || {
+                    let mut backup_file = File::create(file_path).unwrap();
                     for y in start_y..(start_y + rows_per_thread) {
                         if y >= camera.height {
                             continue;
@@ -48,7 +51,7 @@ impl Generator for ThreadedGenerator {
 
                         for x in 0..camera.width {
                             let mut guard = local_output.lock().unwrap();
-                            guard.set_at(x, y, callback(x, y));
+                            guard.set_at(x, y, callback(x, y), &mut backup_file);
                         }
 
                         info!("Finished row {}", y);
