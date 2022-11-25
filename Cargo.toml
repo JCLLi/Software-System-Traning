@@ -1,0 +1,13 @@
+[workspace]
+
+members = [
+    "uart",
+    "runner",
+]
+
+default-members = [
+    "uart",
+]
+
+[profile.release]
+opt-level = "z"

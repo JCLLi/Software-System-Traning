@@ -1,0 +1,16 @@
+# cargo-features = ["per-package-target"]
+
+[package]
+name = "uart"
+version = "0.1.0"
+edition = "2021"
+# forced-target = "thumbv6m-none-eabi"
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+cortex-m = "0.7.6"
+cortex-m-rt = "0.7.1"
+cortex-m-semihosting = "0.5.0"
+alloc-cortex-m = "0.4.2"
+nrf51-hal = "0.15.1"
+nrf51-pac = "0.11.0"
