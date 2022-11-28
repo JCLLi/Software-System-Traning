@@ -9,7 +9,7 @@ pub fn call_set_at() {
         10,
         "back.rgb",
     );
-    let mut f = File::create("bcak.rgb").unwrap();
+    let mut f = File::create("back.rgb").unwrap();
 
     for x in 0..10{
         for y in 0..10{
