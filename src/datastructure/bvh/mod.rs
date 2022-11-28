@@ -28,12 +28,14 @@ impl Debug for KDTreeDataStructure {
     }
 }
 
-fn intersects_triangle(ray: Ray, triangle: Arc<Triangle>) -> Option<Intersection> {
+
+fn intersects_triangle(ray: &Ray, triangle: &Arc<Triangle>) -> Option<Intersection> {
+    // let (Ta, Tb, Tc) = triangle.get_all();
     let edge1 = triangle.b() - triangle.a();
     let edge2 = triangle.c() - triangle.a();
 
-    let h = ray.direction.cross(edge2);
-    let a = edge1.dot(h);
+    let h = ray.direction.cross(&edge2);
+    let a = edge1.dot(&h);
 
     if -INTERSECTION_EPSILON < a && a < INTERSECTION_EPSILON {
         return None;
@@ -42,10 +44,10 @@ fn intersects_triangle(ray: Ray, triangle: Arc<Triangle>) -> Option<Intersection
     let f = 1f64 / a;
 
     let s = ray.origin - triangle.a();
-    let u = f * s.dot(h);
+    let u = f * s.dot(&h);
 
-    let q = s.cross(edge1);
-    let v = f * ray.direction.dot(q);
+    let q = s.cross(&edge1);
+    let v = f * ray.direction.dot(&q);
 
     if u < 0f64 || u > 1f64 {
         return None;
@@ -55,7 +57,7 @@ fn intersects_triangle(ray: Ray, triangle: Arc<Triangle>) -> Option<Intersection
         return None;
     }
 
-    let t = f * edge2.dot(q);
+    let t = f * edge2.dot(&q);
     if t < INTERSECTION_EPSILON {
         return None;
     }
@@ -63,8 +65,8 @@ fn intersects_triangle(ray: Ray, triangle: Arc<Triangle>) -> Option<Intersection
     Some(Intersection {
         uv: (u, v),
         t,
-        ray: Box::new(ray),
-        triangle,
+        ray: Box::new(ray.clone()),
+        triangle: triangle.clone(),
     })
 }
 
@@ -80,19 +82,19 @@ impl KDTreeDataStructure {
         Self { root }
     }
 
-    fn intersect_internal(ray: Ray, node: &mut BVHNode) -> Option<Intersection> {
+    fn intersect_internal(ray: &Ray, node: &BVHNode) -> Option<Intersection> {
         debug!("intersection {:?} {}", ray, node);
         match node {
             BVHNode::Leaf {
                 bounding_box,
                 triangles,
             } => {
-                if intersects_boundingbox(bounding_box.clone(), ray.clone()).is_some() {
+                if intersects_boundingbox(bounding_box, &ray).is_some() {
                     let mut min = None;
 
                     for triangle in triangles {
                         if let Some(intersection) =
-                            intersects_triangle(ray.clone(), triangle.clone())
+                            intersects_triangle(&ray, &triangle)
                         {
                             min = match min {
                                 None => Some(intersection),
@@ -111,24 +113,24 @@ impl KDTreeDataStructure {
                 left,
                 right,
             } => {
-                let dist_l = intersects_bhv(left, ray.clone());
-                let dist_r = intersects_bhv(right, ray.clone());
+                let dist_l = intersects_bhv(left, &ray);
+                let dist_r = intersects_bhv(right, &ray);
 
                 match (dist_l, dist_r) {
                     (None, None) => None,
-                    (Some(_), None) => Self::intersect_internal(ray.clone(), left),
-                    (None, Some(_)) => Self::intersect_internal(ray.clone(), right),
+                    (Some(_), None) => Self::intersect_internal(&ray, left),
+                    (None, Some(_)) => Self::intersect_internal(&ray, right),
                     (Some(left_intersection), Some(right_intersection)) => {
                         if left_intersection.t < right_intersection.t {
-                            let hit = Self::intersect_internal(ray.clone(), left);
+                            let hit = Self::intersect_internal(&ray, left);
                             if let Some(intersection) = hit {
                                 if left.includes_point(&intersection.hit_pos()) {
                                     return Some(intersection);
                                 }
                             }
-                            Self::intersect_internal(ray.clone(), right)
+                            Self::intersect_internal(&ray, right)
                         } else {
-                            let hit = Self::intersect_internal(ray.clone(), right);
+                            let hit = Self::intersect_internal(&ray, right);
                             if let Some(intersection) = hit {
                                 if right.includes_point(&intersection.hit_pos()) {
                                     return Some(intersection);
@@ -144,26 +146,26 @@ impl KDTreeDataStructure {
 }
 
 impl DataStructure for KDTreeDataStructure {
-    fn intersects(&mut self, ray: Ray) -> Option<Intersection> {
-        Self::intersect_internal(ray, &mut self.root)
+    fn intersects(&self, ray: &Ray) -> Option<Intersection> {
+        Self::intersect_internal(&ray, &self.root)
     }
 }
 
-pub fn intersects_bhv(node: &mut BVHNode, ray: Ray) -> Option<BoxIntersection> {
+pub fn intersects_bhv(node: &BVHNode, ray: &Ray) -> Option<BoxIntersection> {
     match node {
         BVHNode::Leaf {
             bounding_box,
             triangles: _,
-        } => intersects_boundingbox(bounding_box.clone(), ray),
+        } => intersects_boundingbox(bounding_box, &ray),
         BVHNode::Node {
             bounding_box,
             left: _,
             right: _,
-        } => intersects_boundingbox(bounding_box.clone(), ray),
+        } => intersects_boundingbox(bounding_box, &ray),
     }
 }
 
-pub fn intersects_boundingbox(boundingbox: BoundingBox, ray: Ray) -> Option<BoxIntersection> {
+pub fn intersects_boundingbox(boundingbox: &BoundingBox, ray: &Ray) -> Option<BoxIntersection> {
     let tmin = (boundingbox.min.x - ray.origin.x) / ray.direction.x;
     let tmax = (boundingbox.max.x - ray.origin.x) / ray.direction.x;
 
@@ -211,7 +213,7 @@ pub fn intersects_boundingbox(boundingbox: BoundingBox, ray: Ray) -> Option<BoxI
 
     Some(BoxIntersection {
         t,
-        ray,
-        boundingbox,
+        ray: ray.clone(),
+        boundingbox: boundingbox.clone(),
     })
 }

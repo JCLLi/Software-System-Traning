@@ -5,34 +5,34 @@ use crate::renderer::Renderer;
 use crate::shader::Shader;
 use std::sync::{Arc, Mutex};
 
-pub struct RendererBuilder {
-    pub(self) generator: Arc<dyn Generator>,
+pub struct RendererBuilder<'a> {
+    pub(self) generator: &'a dyn Generator,
 }
 
-pub struct RendererBuilderRaytracer {
-    pub(self) generator: Arc<dyn Generator>,
-    pub(self) raytracer: Arc<dyn RayTracer>,
+pub struct RendererBuilderRaytracer<'a> {
+    pub(self) generator: &'a dyn Generator,
+    pub(self) raytracer: &'a dyn RayTracer,
 }
 
-pub struct RendererBuilderShader {
-    pub(self) generator: Arc<dyn Generator>,
-    pub(self) raytracer: Arc<dyn RayTracer>,
-    pub(self) shader: Arc<dyn Shader>,
+pub struct RendererBuilderShader<'a> {
+    pub(self) generator: &'a dyn Generator,
+    pub(self) raytracer: &'a dyn RayTracer,
+    pub(self) shader: &'a dyn Shader
 }
 
-pub struct RendererBuilderDatastructure {
-    pub(self) generator: Arc<dyn Generator>,
-    pub(self) raytracer: Arc<dyn RayTracer>,
-    pub(self) shader: Arc<dyn Shader>,
-    pub(self) datastructure: Arc<Mutex<Box<dyn DataStructure>>>,
+pub struct RendererBuilderDatastructure<'a> {
+    pub(self) generator: &'a dyn Generator,
+    pub(self) raytracer: &'a dyn RayTracer,
+    pub(self) shader: &'a dyn Shader,
+    pub(self) datastructure: Arc<dyn DataStructure>,
 }
 
-impl RendererBuilder {
-    pub fn new(generator: Arc<dyn Generator>) -> Self {
+impl<'a> RendererBuilder<'a> {
+    pub fn new(generator: &'a dyn Generator) -> Self {
         Self { generator }
     }
 
-    pub fn with_raytracer(self, raytracer: Arc<dyn RayTracer>) -> RendererBuilderRaytracer {
+    pub fn with_raytracer(self, raytracer: &'a dyn RayTracer) -> RendererBuilderRaytracer<'a> {
         RendererBuilderRaytracer {
             generator: self.generator,
             raytracer,
@@ -40,8 +40,8 @@ impl RendererBuilder {
     }
 }
 
-impl RendererBuilderRaytracer {
-    pub fn with_shader(self, shader: Arc<dyn Shader>) -> RendererBuilderShader {
+impl<'a> RendererBuilderRaytracer<'a> {
+    pub fn with_shader(self, shader: &'a dyn Shader) -> RendererBuilderShader<'a> {
         RendererBuilderShader {
             generator: self.generator,
             raytracer: self.raytracer,
@@ -50,11 +50,11 @@ impl RendererBuilderRaytracer {
     }
 }
 
-impl RendererBuilderShader {
+impl<'a> RendererBuilderShader<'a> {
     pub fn with_datastructure(
         self,
-        datastructure: Arc<Mutex<Box<dyn DataStructure>>>,
-    ) -> RendererBuilderDatastructure {
+        datastructure: Arc<dyn DataStructure>,
+    ) -> RendererBuilderDatastructure<'a> {
         RendererBuilderDatastructure {
             generator: self.generator,
             raytracer: self.raytracer,
@@ -64,8 +64,9 @@ impl RendererBuilderShader {
     }
 }
 
-impl RendererBuilderDatastructure {
-    pub fn build(self) -> Renderer {
+impl<'a> RendererBuilderDatastructure<'a> {
+    //changes here
+    pub fn build(self) -> Renderer<'a> {
         Renderer::new(
             self.generator,
             self.raytracer,

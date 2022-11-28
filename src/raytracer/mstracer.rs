@@ -19,23 +19,25 @@ impl MSTracer {
 }
 
 impl RayTracer for MSTracer {
-    fn raytrace<'r>(
+    fn raytrace<'a>(
         &self,
         x: usize,
         y: usize,
-        datastructure: Arc<Mutex<Box<dyn DataStructure>>>,
-        shader: Arc<dyn Shader>,
+        datastructure: Arc<dyn DataStructure>,
+        shader: &'a dyn Shader,
         camera: &Camera,
     ) -> Vector {
         let mut out = Vector::repeated(0f64);
+        let ray = camera.generate_ray(x as f64, y as f64);
+        let intersection = datastructure.intersects(&ray);
         for _ in 0..self.samples_per_pixel {
-            let ray = camera.generate_ray(x as f64, y as f64);
-            out += shader.shade(ray, datastructure.clone()) / self.samples_per_pixel as f64;
-
-            print!("\r{x}, {y} ");
-            stdout().flush().unwrap();
+            out += shader.shade(&ray, datastructure.clone(), &intersection);
         }
 
-        out
+        //Though the print here seems redundant as well, we keep it
+        // print!("\r{x}, {y} ");
+        // stdout().flush().unwrap();
+
+        out / self.samples_per_pixel as f64
     }
 }

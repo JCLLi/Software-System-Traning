@@ -42,11 +42,11 @@ impl Vector {
         self.x.abs() < EPSILON && self.y.abs() < EPSILON && self.z.abs() < EPSILON
     }
 
-    pub fn dot(&self, other: Self) -> f64 {
+    pub fn dot(&self, other: &Self) -> f64 {
         self.x * other.x + self.y * other.y + self.z * other.z
     }
 
-    pub fn cross(&self, other: Self) -> Self {
+    pub fn cross(&self, other: &Self) -> Self {
         Vector::new(
             self.y * other.z - self.z * other.y,
             self.z * other.x - self.x * other.z,
@@ -123,7 +123,7 @@ impl Vector {
                 / (rotation.y.powi(2) + rotation.z.powi(2)).sqrt()
         };
 
-        let nb = rotation.cross(nt);
+        let nb = rotation.cross(&nt);
 
         let x = self.x * nb.x + self.y * rotation.x + self.z * nt.x;
         let y = self.x * nb.y + self.y * rotation.y + self.z * nt.y;

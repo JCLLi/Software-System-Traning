@@ -8,7 +8,7 @@ use std::path::{Path, PathBuf};
 
 #[derive(Clone)]
 pub struct OutputBuffer {
-    buffer: Vec<Vec<Vector>>,
+    pub buffer: Vec<Vec<Vector>>,
     backup_location: PathBuf,
 }
 
@@ -56,20 +56,27 @@ impl OutputBuffer {
         img
     }
 
-    pub fn set_at(&mut self, x: usize, y: usize, color: Vector, file: &mut File) {
+    pub fn set_at_threaded(&mut self, x: usize, y: usize, color: Vector, backup_file: &mut File) {
         self.buffer[y][x] = color;
 
-        // let mut f = File::create(self.backup_location.clone()).unwrap();
-        let mut buf = BufWriter::new(file);
-        writeln!(buf, "{}, {}, {};", color.x, color.y, color.z);
+        let mut buf = BufWriter::new(backup_file);
+        write!(buf, "{}, {}, {};", color.x, color.y, color.z);
+        if x == self.buffer.len() - 1 {
+            writeln!(buf);
+        }
         buf.flush();
-        // let mut f = File::create(self.backup_location.clone()).unwrap();
-        // for row in &self.buffer {
-        //     for column in row {
-        //         write!(f, "{}, {}, {};", column.x, column.y, column.z).unwrap();
-        //         f.flush().unwrap();
-        //     }
-        //     writeln!(f).unwrap();
-        // }
+    }
+
+    pub fn set_at_basic(&mut self, x: usize, y: usize, color: Vector, file: &mut File) {
+        self.buffer[y][x] = color;
+
+        let mut buf = BufWriter::new(file);
+        for _row in &self.buffer {
+            for _column in _row {
+                write!(buf, "{}, {}, {};", color.x, color.y, color.z);
+                buf.flush();
+            }
+            writeln!(buf);
+        }
     }
 }

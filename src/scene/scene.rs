@@ -96,11 +96,13 @@ impl SceneBuilder {
         &self,
         (models, tobjmaterials): (Vec<tobj::Model>, Vec<tobj::Material>),
     ) -> Result<Scene, SceneError> {
+        //creating meshes is efficient enough
         let mut meshes: Vec<_> = (0..models.len())
             .map(|_| Arc::new(Mesh::default()))
             .collect();
         let mut textureatlasbuilder = TextureAtlasBuilder::new();
 
+        //might be able to improve with lazy iterator
         for material in &tobjmaterials {
             if !material.diffuse_texture.is_empty() {
                 textureatlasbuilder
@@ -119,7 +121,9 @@ impl SceneBuilder {
                     .add_texture_file(&material.specular_texture, &self.texturepath)?
             }
 
-            let default_emittance_texture_name = "".into();
+            //might be an improvement, don't know yet
+            // let default_emittance_texture_name = "".into();
+            let default_emittance_texture_name = String::from("");
             let emittance_texture_name = material
                 .unknown_param
                 .get("map_Ke")
@@ -146,17 +150,20 @@ impl SceneBuilder {
                 .mesh
                 .positions
                 .chunks_exact(3)
-                .map(|i| Vector::new(i[0] as f64, i[1] as f64, i[2] as f64));
+                .map(|i| Vector::new(i[0] as f64, i[1] as f64, i[2] as f64))
+                .collect::<Vec<_>>();
             let normals = model
                 .mesh
                 .normals
                 .chunks_exact(3)
-                .map(|i| Vector::new(i[0] as f64, i[1] as f64, i[2] as f64));
+                .map(|i| Vector::new(i[0] as f64, i[1] as f64, i[2] as f64))
+                .collect::<Vec<_>>();
             let texcoords = model
                 .mesh
                 .texcoords
                 .chunks_exact(2)
-                .map(|i| TextureCoordinate::new(i[0] as f64, i[1] as f64));
+                .map(|i| TextureCoordinate::new(i[0] as f64, i[1] as f64))
+                .collect::<Vec<_>>();
 
             let material = match model.mesh.material_id {
                 Some(id) => materials[id].clone(),
@@ -164,11 +171,11 @@ impl SceneBuilder {
             };
 
             let mesh = Arc::new(Mesh {
-                vertices: vertices.collect::<Vec<_>>(),
+                vertices,
                 triangles: OnceCell::new(),
-                normals: normals.collect::<Vec<_>>(),
-                texcoords: texcoords.collect::<Vec<_>>(),
-                material: material.clone(),
+                normals,
+                texcoords,
+                material,
             });
 
             let triangles = model

@@ -13,7 +13,7 @@ pub mod mcshader;
 /// it gets back, it can give a color to a pixel. A shader can query the `datastructure`
 /// multiple times to achieve such things as reflection, refraction, and other effects.
 pub trait Shader: Send + Sync + Debug {
-    fn shade(&self, ray: Box<Ray>, datastructure: Arc<Mutex<Box<dyn DataStructure>>>) -> Vector;
+    fn shade<'a> (&self, ray: &Ray, datastructure: Arc<dyn DataStructure>, intersection: &Option<Intersection>) -> Vector;
 }
 
 pub fn ambient(intersection: &Intersection) -> Vector {
@@ -30,6 +30,7 @@ pub fn ambient(intersection: &Intersection) -> Vector {
 }
 
 pub fn emittance(intersection: &Intersection) -> Vector {
+    //the clone here is also redundant
     let texture = if let Some(texture) = intersection
         .triangle
         .mesh
@@ -52,8 +53,8 @@ pub fn map_uv(intersection: &Intersection) -> TextureCoordinate {
     let texb = intersection.triangle.texture_b();
     let texc = intersection.triangle.texture_c();
 
-    let e1 = texc - texa;
-    let e2 = texb - texa;
+    let e1 = &texc - &texa;
+    let e2 = &texb - &texa;
 
     texa.to_owned() + (e1 * intersection.uv.1) + (e2 * intersection.uv.0)
 }
@@ -71,7 +72,7 @@ pub fn diffuse(intersection: &Intersection, hit_pos: Vector, light_pos: Vector) 
     };
 
     let light_dir = (light_pos - hit_pos).unit();
-    light_dir.dot(triangle.normal()).max(0.) * triangle.material().diffuse * texture
+    light_dir.dot(&triangle.normal()).max(0.) * triangle.material().diffuse * texture
 }
 
 pub fn specular(
@@ -92,8 +93,8 @@ pub fn specular(
     let triangle = intersection.triangle.clone();
 
     let light_dir = (light_pos - hit_pos).unit();
-    let reflec = 2f64 * (triangle.normal().dot(light_dir)) * triangle.normal() - light_dir;
-    let spec = 0f64.max((cam_pos - hit_pos).unit().dot(reflec));
+    let reflec = 2f64 * (triangle.normal().dot(&light_dir)) * triangle.normal() - light_dir;
+    let spec = 0f64.max((cam_pos - hit_pos).unit().dot(&reflec));
 
     spec.powf(triangle.material().shininess) * triangle.material().specular * texture
 }
