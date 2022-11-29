@@ -31,8 +31,9 @@ impl Debug for KDTreeDataStructure {
 
 fn intersects_triangle(ray: &Ray, triangle: &Arc<Triangle>) -> Option<Intersection> {
     // let (Ta, Tb, Tc) = triangle.get_all();
-    let edge1 = triangle.b() - triangle.a();
-    let edge2 = triangle.c() - triangle.a();
+    let aa = triangle.a();
+    let edge1 = triangle.b() - aa;
+    let edge2 = triangle.c() - aa;
 
     let h = ray.direction.cross(&edge2);
     let a = edge1.dot(&h);
@@ -43,7 +44,7 @@ fn intersects_triangle(ray: &Ray, triangle: &Arc<Triangle>) -> Option<Intersecti
 
     let f = 1f64 / a;
 
-    let s = ray.origin - triangle.a();
+    let s = ray.origin - aa;
     let u = f * s.dot(&h);
 
     let q = s.cross(&edge1);

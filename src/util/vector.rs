@@ -133,9 +133,11 @@ impl Vector {
     }
 
     pub fn point_on_hemisphere() -> Vector {
-        let theta = get_rng().gen::<f64>() * 2f64 * f64::consts::PI;
-        let phi = (1f64 - 2f64 * get_rng().gen::<f64>()).acos();
-
+        let num = fastrand::Rng::new();
+        // let theta = get_rng().gen::<f64>() * 2f64 * f64::consts::PI;
+        // let phi = (1f64 - 2f64 * get_rng().gen::<f64>()).acos();
+        let theta = num.f64() * 2f64 * f64::consts::PI;
+        let phi = (1f64 - 2f64 * num.f64()).acos();
         Vector::new(
             phi.sin() * theta.cos(),
             (phi.sin() * theta.sin()).abs(),
@@ -144,15 +146,17 @@ impl Vector {
     }
 
     pub fn point_on_sphere() -> Vector {
-        let theta = get_rng().gen::<f64>() * 2f64 * f64::consts::PI;
-        let phi = (1f64 - 2f64 * get_rng().gen::<f64>()).acos();
+        let num = fastrand::Rng::new();
+        let theta = num.f64() * 2f64 * f64::consts::PI;
+        let phi = (1f64 - 2f64 * num.f64()).acos();
 
         Vector::new(phi.sin() * theta.cos(), phi.sin() * theta.sin(), phi.cos())
     }
 
     pub fn point_on_diffuse_hemisphere() -> Vector {
-        let u = get_rng().gen::<f64>();
-        let v = 2. * f64::consts::PI * get_rng().gen::<f64>();
+        let num = fastrand::Rng::new();
+        let u = num.f64();
+        let v = 2. * f64::consts::PI * num.f64();
 
         Vector::new(v.cos() * u.sqrt(), (1. - u).sqrt(), v.sin() * u.sqrt())
     }
