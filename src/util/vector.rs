@@ -133,11 +133,11 @@ impl Vector {
     }
 
     pub fn point_on_hemisphere() -> Vector {
-        let num = fastrand::Rng::new();
-        // let theta = get_rng().gen::<f64>() * 2f64 * f64::consts::PI;
-        // let phi = (1f64 - 2f64 * get_rng().gen::<f64>()).acos();
-        let theta = num.f64() * 2f64 * f64::consts::PI;
-        let phi = (1f64 - 2f64 * num.f64()).acos();
+        //let num = fastrand::Rng::new();
+        let theta = get_rng().gen::<f64>() * 2f64 * f64::consts::PI;
+        let phi = (1f64 - 2f64 * get_rng().gen::<f64>()).acos();
+        // let theta = num.f64() * 2f64 * f64::consts::PI;
+        // let phi = (1f64 - 2f64 * num.f64()).acos();
         Vector::new(
             phi.sin() * theta.cos(),
             (phi.sin() * theta.sin()).abs(),

@@ -1,5 +1,5 @@
 use rand::rngs::OsRng;
-use rand::Rng;
+use rand::{Rng, thread_rng};
 
 pub mod camera;
 pub mod color;
@@ -10,5 +10,6 @@ pub mod vector;
 
 pub fn get_rng() -> impl Rng {
     // Best random distribution
-    OsRng
+    //OsRng
+    thread_rng()
 }
