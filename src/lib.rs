@@ -11,7 +11,7 @@ pub mod scene;
 pub mod shader;
 pub mod util;
 
-pub fn main() {
+pub fn call_main() {
     simple_logging::log_to_stderr(LevelFilter::Info);
 
     Config::load("configurations/reference.yml")

@@ -21,6 +21,15 @@ fastrand = "1.8.0"
 opt-level = 3
 debug = true
 
+#[lib]
+#name = "lib"
+#path = "src/lib.rs"
+#
+#[[bin]]
+#name = "MAIN"
+#path = "src/main.rs"
+
+
 [[bench]]
 name = "benchmark"
 harness = false
