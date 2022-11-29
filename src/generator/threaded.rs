@@ -37,27 +37,33 @@ impl Generator for ThreadedGenerator {
 
             // ceiling division
             let chunks = (camera.height + rows_per_thread - 1) / rows_per_thread;
+            let backup_file = File::create(file_path).unwrap();
 
             for index in 0..chunks {
                 let start_y = index * rows_per_thread;
 
                 let local_output = Arc::clone(&output);
+
+                let mut backup_file = backup_file.try_clone().unwrap();
+
                 s.spawn(move || {
-                    let mut backup_file = File::create(file_path).unwrap();
+
                     for y in start_y..(start_y + rows_per_thread) {
+
                         if y >= camera.height {
                             continue;
                         }
-
-                        for x in 0..camera.width {
+                        for x in 0..camera.width{
+                            let color = callback(x, y);
                             let mut guard = local_output.lock().unwrap();
-                            guard.set_at(x, y, callback(x, y), &mut backup_file);
+                            guard.set_at_threaded(x, y, color, &mut backup_file);
                         }
 
                         info!("Finished row {}", y);
                     }
                 });
             }
+
         });
 
         let output = output.lock().unwrap().clone();

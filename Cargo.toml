@@ -14,6 +14,22 @@ rand = "0.7"
 serde_yaml = "0.8"
 serde = {version = "1", features = ["derive"]}
 thiserror = "1"
+criterion = "0.3"
+fastrand = "1.8.0"
 
 [profile.release]
+opt-level = 3
 debug = true
+
+#[lib]
+#name = "lib"
+#path = "src/lib.rs"
+#
+#[[bin]]
+#name = "MAIN"
+#path = "src/main.rs"
+
+
+[[bench]]
+name = "benchmark"
+harness = false

@@ -19,15 +19,16 @@ type Callback<'a> = (dyn Fn(usize, usize) -> Vector + Sync + 'a);
 /// This is important to be it's own subsystem because this iteration can be done in many ways
 /// such as multithreaded, singlethreaded, or even spread over multiple machines.
 pub trait Generator: Debug {
-    fn generate_internal(
+    fn generate_internal<'a>(
         &self,
-        raytracer: Arc<dyn RayTracer>,
-        datastructure: Arc<Mutex<Box<dyn DataStructure>>>,
-        shader: Arc<dyn Shader>,
+        raytracer: &'a dyn RayTracer,
+        datastructure: Arc<dyn DataStructure>,
+        shader: &'a dyn Shader,
         camera: &Camera,
     ) -> OutputBuffer {
         self.generate(camera, &|x, y| {
-            raytracer.raytrace(x, y, datastructure.clone(), shader.clone(), camera)
+            // the clone here also redundant
+            raytracer.raytrace(x, y, datastructure.clone(), shader, camera)
         })
     }
 

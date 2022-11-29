@@ -32,18 +32,18 @@ impl BVHNode {
                 bounding_box: _,
                 triangles,
             } => {
-                write!(f, "{}", "\t".repeat(depth))?;
-                writeln!(f, "leaf node with {} triangles:", triangles.len(),)?;
+                // write!(f, "{}", "\t".repeat(depth))?;
+                // writeln!(f, "leaf node with {} triangles:", triangles.len(),)?;
             }
             BVHNode::Node {
                 left,
                 right,
                 bounding_box: _,
             } => {
-                write!(f, "{}", "\t".repeat(depth))?;
-                writeln!(f, ">>")?;
-                left.print(f, depth + 1)?;
-                right.print(f, depth + 1)?;
+                // write!(f, "{}", "\t".repeat(depth))?;
+                // writeln!(f, ">>")?;
+                // left.print(f, depth + 1)?;
+                // right.print(f, depth + 1)?;
             }
         }
 
@@ -54,6 +54,20 @@ impl BVHNode {
         debug!("Creating new KD Tree with {} triangles", triangles.len());
 
         let bb = BoundingBox::from_triangles(triangles.iter().cloned());
+
+        if triangles.len() == 0 {
+            return BVHNode::Leaf {
+                bounding_box: BoundingBox::EMPTY,
+                triangles,
+            };
+        }
+
+        if triangles.len() < 30 {
+            return BVHNode::Leaf {
+                bounding_box: bb,
+                triangles,
+            };
+        }
 
         Self::new_internal(triangles, bb, 0)
     }
@@ -82,18 +96,18 @@ impl BVHNode {
         bounding_box: BoundingBox,
         depth: usize,
     ) -> Self {
-        if triangles.len() == 0 {
-            return BVHNode::Leaf {
-                bounding_box: BoundingBox::EMPTY,
-                triangles,
-            };
-        }
-        if triangles.len() < 30 {
-            return BVHNode::Leaf {
-                bounding_box,
-                triangles,
-            };
-        }
+        // if triangles.len() == 0 {
+        //     return BVHNode::Leaf {
+        //         bounding_box: BoundingBox::EMPTY,
+        //         triangles,
+        //     };
+        // }
+        // if triangles.len() < 30 {
+        //     return BVHNode::Leaf {
+        //         bounding_box,
+        //         triangles,
+        //     };
+        // }
 
         let longest_axis = bounding_box.longest_axis();
 

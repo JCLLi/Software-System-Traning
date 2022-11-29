@@ -10,5 +10,5 @@ pub mod intersection;
 pub trait DataStructure: Send + Sync + Debug {
     /// If a ray intersects multiple points in the scene, the intersects function must always
     /// return the intersection closest to the origin of the ray.
-    fn intersects(&mut self, ray: Ray) -> Option<Intersection>;
+    fn intersects(&self, ray: &Ray) -> Option<Intersection>;
 }

@@ -42,11 +42,11 @@ impl Vector {
         self.x.abs() < EPSILON && self.y.abs() < EPSILON && self.z.abs() < EPSILON
     }
 
-    pub fn dot(&self, other: Self) -> f64 {
+    pub fn dot(&self, other: &Self) -> f64 {
         self.x * other.x + self.y * other.y + self.z * other.z
     }
 
-    pub fn cross(&self, other: Self) -> Self {
+    pub fn cross(&self, other: &Self) -> Self {
         Vector::new(
             self.y * other.z - self.z * other.y,
             self.z * other.x - self.x * other.z,
@@ -123,7 +123,7 @@ impl Vector {
                 / (rotation.y.powi(2) + rotation.z.powi(2)).sqrt()
         };
 
-        let nb = rotation.cross(nt);
+        let nb = rotation.cross(&nt);
 
         let x = self.x * nb.x + self.y * rotation.x + self.z * nt.x;
         let y = self.x * nb.y + self.y * rotation.y + self.z * nt.y;
@@ -133,9 +133,11 @@ impl Vector {
     }
 
     pub fn point_on_hemisphere() -> Vector {
+        //let num = fastrand::Rng::new();
         let theta = get_rng().gen::<f64>() * 2f64 * f64::consts::PI;
         let phi = (1f64 - 2f64 * get_rng().gen::<f64>()).acos();
-
+        // let theta = num.f64() * 2f64 * f64::consts::PI;
+        // let phi = (1f64 - 2f64 * num.f64()).acos();
         Vector::new(
             phi.sin() * theta.cos(),
             (phi.sin() * theta.sin()).abs(),
@@ -144,15 +146,17 @@ impl Vector {
     }
 
     pub fn point_on_sphere() -> Vector {
-        let theta = get_rng().gen::<f64>() * 2f64 * f64::consts::PI;
-        let phi = (1f64 - 2f64 * get_rng().gen::<f64>()).acos();
+        let num = fastrand::Rng::new();
+        let theta = num.f64() * 2f64 * f64::consts::PI;
+        let phi = (1f64 - 2f64 * num.f64()).acos();
 
         Vector::new(phi.sin() * theta.cos(), phi.sin() * theta.sin(), phi.cos())
     }
 
     pub fn point_on_diffuse_hemisphere() -> Vector {
-        let u = get_rng().gen::<f64>();
-        let v = 2. * f64::consts::PI * get_rng().gen::<f64>();
+        let num = fastrand::Rng::new();
+        let u = num.f64();
+        let v = 2. * f64::consts::PI * num.f64();
 
         Vector::new(v.cos() * u.sqrt(), (1. - u).sqrt(), v.sin() * u.sqrt())
     }

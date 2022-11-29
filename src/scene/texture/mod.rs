@@ -7,7 +7,7 @@ use crate::scene::texturecoordinate::TextureCoordinate;
 use crate::util::vector::Vector;
 use std::fmt::{Debug, Formatter};
 use std::fs::File;
-use std::io::Read;
+use std::io::{BufReader, Read};
 use std::{fmt, io};
 pub use textureatlas::{TextureAtlas, TextureAtlasBuilder};
 use thiserror::Error;
@@ -39,9 +39,10 @@ impl Debug for Texture {
 impl Texture {
     pub fn new(filename: impl AsRef<Path>) -> Result<Self, TextureError> {
         let mut f = File::open(filename)?;
+        let mut reader = BufReader::new(f);
         let mut buf = [0; 20];
         let mut image_buffer = Vec::with_capacity(0);
-        while f.read_exact(&mut buf).is_ok() {
+        while reader.read_exact(&mut buf).is_ok() {
             for i in buf {
                 image_buffer.push(i);
             }

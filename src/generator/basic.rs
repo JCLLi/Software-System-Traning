@@ -16,7 +16,7 @@ impl Generator for BasicGenerator {
         for x in 0..camera.width {
             for y in 0..camera.height {
                 let res = callback(x, y);
-                output.set_at(x, y, res, &mut backup_file);
+                output.set_at_basic(x, y, res, &mut backup_file);
             }
         }
 

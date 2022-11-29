@@ -11,19 +11,19 @@ use crate::generator::Generator;
 pub use builder::RendererBuilder;
 
 #[derive(Debug)]
-pub struct Renderer {
-    generator: Arc<dyn Generator>,
-    raytracer: Arc<dyn RayTracer>,
-    shader: Arc<dyn Shader>,
-    datastructure: Arc<Mutex<Box<dyn DataStructure>>>,
+pub struct Renderer<'a> {
+    generator: &'a dyn Generator,
+    raytracer: &'a dyn RayTracer,
+    shader: &'a dyn Shader,
+    datastructure: Arc<dyn DataStructure>,
 }
 
-impl Renderer {
+impl<'a> Renderer<'a> {
     pub(self) fn new(
-        generator: Arc<dyn Generator>,
-        raytracer: Arc<dyn RayTracer>,
-        shader: Arc<dyn Shader>,
-        datastructure: Arc<Mutex<Box<dyn DataStructure>>>,
+        generator: &'a dyn Generator,
+        raytracer: &'a dyn RayTracer,
+        shader: &'a dyn Shader,
+        datastructure: Arc<dyn DataStructure>,
     ) -> Self {
         Self {
             generator,
@@ -33,11 +33,12 @@ impl Renderer {
         }
     }
 
+    //All these clones seem redundant, find a way to eliminate them
     pub fn render(&self, camera: &Camera) -> OutputBuffer {
         self.generator.generate_internal(
-            self.raytracer.clone(),
+            self.raytracer,
             self.datastructure.clone(),
-            self.shader.clone(),
+            self.shader,
             camera,
         )
     }

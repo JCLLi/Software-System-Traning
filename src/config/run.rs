@@ -1,3 +1,4 @@
+use std::borrow::Borrow;
 use crate::config::error::ConfigError;
 use crate::config::{Config, GeneratorConfig};
 use crate::datastructure::bvh::KDTreeDataStructure;
@@ -12,33 +13,40 @@ use crate::scene::scene::SceneBuilder;
 use crate::shader::mcshader::McShader;
 
 use crate::util::camera::Camera;
+use std::sync::{Arc, Mutex};
 
 use std::path::PathBuf;
-use std::sync::{Arc, Mutex};
 
 impl Config {
     pub fn run(self) -> Result<(), ConfigError> {
+        //load_obj is fine, library
         let (model, mtls) = tobj::load_obj(self.general.scenename.as_ref())?;
 
+        //texture path is fine, very simple function
         let scene = SceneBuilder::default()
             .texturepath(PathBuf::from(&self.general.texturepath))
             .build_from_tobj((model, mtls))?;
 
-        let generator: Arc<dyn Generator> = match self.generator {
-            GeneratorConfig::Basic => Arc::new(BasicGenerator),
+        //Arc seems redundant, Box might be fine
+        let generator: Box<dyn Generator> = match self.generator {
+            GeneratorConfig::Basic => Box::new(BasicGenerator),
             GeneratorConfig::Threaded { threads } => {
-                Arc::new(ThreadedGenerator::new(threads.get_cores()))
+                Box::new(ThreadedGenerator::new(threads.get_cores()))
             }
         };
 
-        let raytracer = MSTracer::new(self.raytracer.samples_per_pixel);
-        let datastructure: Mutex<Box<dyn DataStructure>> =
-            Mutex::new(Box::new(KDTreeDataStructure::new(&scene)));
+        let raytracer = Box::new(MSTracer::new(self.raytracer.samples_per_pixel));
 
-        let renderer = RendererBuilder::new(generator)
-            .with_raytracer(Arc::new(raytracer))
-            .with_shader(Arc::new(McShader))
-            .with_datastructure(Arc::new(datastructure))
+        let shader = Box::new(McShader);
+
+        //Mutex seems redundant as well
+        let datastructure =
+            Arc::new(KDTreeDataStructure::new(&scene));
+        //All these Arc seems redundant
+        let renderer = RendererBuilder::new(generator.as_ref())
+            .with_raytracer(raytracer.as_ref())
+            .with_shader(shader.as_ref())
+            .with_datastructure(datastructure.clone())
             .build();
 
         let camera = Camera::new(

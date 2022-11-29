@@ -32,14 +32,21 @@ impl Debug for Triangle {
 }
 
 impl Triangle {
+    pub fn get_all(&self) -> (&Vector, &Vector, &Vector) {
+        (&self.mesh.vertices[self.a], &self.mesh.vertices[self.b], &self.mesh.vertices[self.c])
+    }
+
+    #[inline]
     pub fn a(&self) -> Vector {
         self.mesh.vertices[self.a]
     }
 
+    #[inline]
     pub fn b(&self) -> Vector {
         self.mesh.vertices[self.b]
     }
 
+    #[inline]
     pub fn c(&self) -> Vector {
         self.mesh.vertices[self.c]
     }
@@ -50,18 +57,21 @@ impl Triangle {
 
     pub fn normal(&self) -> Vector {
         // TODO: depends on illum model
-
-        (self.c() - self.a()).cross(self.c() - self.b()).unit()
+        let (a, b, c) = self.get_all();
+        (*c - *a).cross(&(*c - *b)).unit()
     }
 
+    #[inline]
     pub fn texture_a(&self) -> TextureCoordinate {
         self.mesh.texcoords[self.a]
     }
 
+    #[inline]
     pub fn texture_b(&self) -> TextureCoordinate {
         self.mesh.texcoords[self.b]
     }
 
+    #[inline]
     pub fn texture_c(&self) -> TextureCoordinate {
         self.mesh.texcoords[self.c]
     }
