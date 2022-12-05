@@ -1,10 +1,13 @@
 use core::ops::Deref;
+use core::ptr::slice_from_raw_parts;
+use cortex_m::asm;
 use crate::UART;
-use nrf51_pac::{interrupt, Interrupt};
+use nrf51_pac::{interrupt, Interrupt, UART0};
 use nrf51_pac::NVIC;
 use nrf51_pac::uart0;
-use nrf51_pac::uart0::{baudrate, enable, tasks_startrx, tasks_starttx};
+use nrf51_pac::uart0::{baudrate, enable, intenclr, intenset, tasks_startrx, tasks_starttx};
 use crate::buffer::UartBuffer;
+use cortex_m_semihosting::hprintln;
 
 /// This struct holds all the global state of the uart driver. Generally, there
 /// is only one instance of this in the global `UART` variable (see `main.rs`).
@@ -51,7 +54,6 @@ impl UartDriver {
             nvic.set_priority(Interrupt::UART0 ,1);
         }
         unsafe {
-
             NVIC::unmask(Interrupt::UART0);
         }
 
@@ -61,17 +63,29 @@ impl UartDriver {
 
     /// This function enables the UART interrupt
     pub fn enable(&self) {
-
+        self.uart.intenset.write(|w: &mut intenset::W| {
+            w.rxdrdy().set()
+        });
+        self.uart.intenset.write(|w: &mut intenset::W| {
+            w.txdrdy().set()
+        });
     }
 
     /// Pushes a single byte over uart
     pub fn put_byte(&mut self, byte: u8) {
-        todo!()
+        loop {
+            if !self.buffer.is_full(){break}
+        }
+
+        self.buffer.write_byte(byte);
     }
 
     /// Reads a single byte from the UART. You may need a buffer to implement this.
     pub fn get_byte(&mut self) -> Option<u8> {
-        todo!()
+        if let Ok(res) = self.buffer.read_byte(){
+            return Some(res);
+        }
+        None
     }
 
     /// Writes the entire buffer over UART. You may need a buffer to implement this.
@@ -100,5 +114,19 @@ impl UartDriver {
 /// It's called when the enabled interrupts for uart0 are triggered
 unsafe fn UART0() {
     // get the global UART driver
-    UART.modify(|uart| todo!())
+
+    // //let perip = nrf51_pac::
+    // UART.modify(|uart: &UartDriver|{
+    //     if uart.uart.events_rxdrdy.
+    // })
+    UART.modify(|uart| uart.uart.intenclr.write(|w| w.txdrdy().clear()));
+    UART.modify(|uart| uart.uart.intenclr.write(|w| w.rxdrdy().clear()));
+    //UART.modify(|uart: &UartDriver| uart.buffer.read_byte());
+    hprintln!("I am here3");
+    hprintln!("I am here2");
+    hprintln!("I am here1");
+    hprintln!("I am here0");
+    asm::delay(2500000);
+    UART.modify(|uart| uart.uart.intenset.write(|w| w.txdrdy().set()));
+    UART.modify(|uart| uart.uart.intenset.write(|w| w.rxdrdy().set()));
 }

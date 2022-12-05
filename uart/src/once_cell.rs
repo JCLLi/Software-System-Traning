@@ -1,7 +1,7 @@
 use core::cell::UnsafeCell;
 use core::marker::PhantomData;
 use core::ops::{Deref, DerefMut};
-use crate::panic;
+use core::panic;
 use crate::uart_driver::UartDriver;
 
 /// A cell that can be written to only once.
