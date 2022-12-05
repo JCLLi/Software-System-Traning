@@ -14,6 +14,7 @@ impl UartDriver {
     /// This function can only be called once since UART0 only exists
     /// once and is moved into the driver here.
     pub fn new(uart: nrf51_pac::UART0, nvic: &mut NVIC) -> Self {
+        uart.enable.write(|w| w.enable().enabled());
         // In this function the following things are done:
         // 1. Enable the UART peripheral
         // 2. Configure the UART peripheral
