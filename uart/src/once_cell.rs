@@ -26,7 +26,7 @@ impl<T> OnceCell<T> {
 
     /// This can initialize an empty cell.
     /// If the cell is already initialized, it should panic.
-    pub fn initialize(&mut self, v: UartDriver) {
+    pub fn initialize(&mut self, v: T) {
         if self.uart_driver.is_some() { panic!("UART driver can only be initialized once") }
         self.uart_driver = Some(v);
     }
@@ -38,12 +38,12 @@ impl<T> Deref for OnceCell<T> {
     type Target = T;
 
     fn deref(&self) -> &Self::Target {
-        todo!()
+        self.uart_driver.as_ref().unwrap()
     }
 }
 
 impl<T> DerefMut for OnceCell<T> {
     fn deref_mut(&mut self) -> &mut Self::Target {
-        todo!()
+        self.uart_driver.as_mut().unwrap()
     }
 }
