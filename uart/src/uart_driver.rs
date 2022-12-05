@@ -1,12 +1,19 @@
+use core::ops::Deref;
 use crate::UART;
-use nrf51_pac::interrupt;
+use nrf51_pac::{interrupt, Interrupt};
 use nrf51_pac::NVIC;
+use nrf51_pac::uart0;
+use nrf51_pac::uart0::{baudrate, enable, tasks_startrx, tasks_starttx};
+use crate::buffer::UartBuffer;
 
 /// This struct holds all the global state of the uart driver. Generally, there
 /// is only one instance of this in the global `UART` variable (see `main.rs`).
 ///
 /// You will need to add fields to this.
-pub struct UartDriver {}
+pub struct UartDriver {
+    uart: nrf51_pac::UART0,
+    buffer: UartBuffer,
+}
 
 impl UartDriver {
     /// Create a new instance of the UART controller.
@@ -14,18 +21,47 @@ impl UartDriver {
     /// This function can only be called once since UART0 only exists
     /// once and is moved into the driver here.
     pub fn new(uart: nrf51_pac::UART0, nvic: &mut NVIC) -> Self {
-        uart.enable.write(|w| w.enable().enabled());
         // In this function the following things are done:
         // 1. Enable the UART peripheral
         // 2. Configure the UART peripheral
         // 3. Configure the UART interrupt
         // 5. Set the interrupt priority
-        todo!()
+
+        let uart_driver = UartDriver{
+            uart,
+            buffer: UartBuffer::new(),
+        };
+
+
+        uart_driver.uart.pselrts.reset();
+        uart_driver.uart.pselrts.reset();
+        uart_driver.uart.pselrxd.reset();
+        uart_driver.uart.pseltxd.reset();
+
+        uart_driver.uart.baudrate.write(|w: &mut baudrate::W| w.baudrate().baud1200());
+        uart_driver.uart.config.reset();
+
+        uart_driver.uart.enable.write(|w: &mut enable::W| {
+            w.enable().enabled()
+        });
+
+        uart_driver.uart.tasks_startrx.write(|w: &mut tasks_startrx::W| unsafe {w.bits(1)});
+        uart_driver.uart.tasks_starttx.write(|w: &mut tasks_starttx::W| unsafe {w.bits(1)});
+        unsafe {
+            nvic.set_priority(Interrupt::UART0 ,1);
+        }
+        unsafe {
+
+            NVIC::unmask(Interrupt::UART0);
+        }
+
+
+        uart_driver
     }
 
     /// This function enables the UART interrupt
     pub fn enable(&self) {
-        todo!()
+
     }
 
     /// Pushes a single byte over uart
