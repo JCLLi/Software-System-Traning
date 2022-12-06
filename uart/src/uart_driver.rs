@@ -5,7 +5,7 @@ use crate::UART;
 use nrf51_pac::{interrupt, Interrupt, UART0};
 use nrf51_pac::NVIC;
 use nrf51_pac::uart0;
-use nrf51_pac::uart0::{baudrate, enable, intenclr, intenset, tasks_startrx, tasks_starttx};
+use nrf51_pac::uart0::{baudrate, enable, intenclr, intenset, tasks_startrx, tasks_starttx, txd};
 use crate::buffer::UartBuffer;
 use cortex_m_semihosting::hprintln;
 
@@ -14,8 +14,9 @@ use cortex_m_semihosting::hprintln;
 ///
 /// You will need to add fields to this.
 pub struct UartDriver {
-    uart: nrf51_pac::UART0,
-    buffer: UartBuffer,
+    pub uart: nrf51_pac::UART0,
+    pub buffer: UartBuffer,
+    pub tx_filled: bool,
 }
 
 impl UartDriver {
@@ -33,6 +34,7 @@ impl UartDriver {
         let uart_driver = UartDriver{
             uart,
             buffer: UartBuffer::new(),
+            tx_filled: false,
         };
 
 
@@ -51,7 +53,7 @@ impl UartDriver {
         uart_driver.uart.tasks_startrx.write(|w: &mut tasks_startrx::W| unsafe {w.bits(1)});
         uart_driver.uart.tasks_starttx.write(|w: &mut tasks_starttx::W| unsafe {w.bits(1)});
         unsafe {
-            nvic.set_priority(Interrupt::UART0 ,1);
+            nvic.set_priority(Interrupt::UART0 ,7);
         }
         unsafe {
             NVIC::unmask(Interrupt::UART0);
@@ -69,6 +71,7 @@ impl UartDriver {
         self.uart.intenset.write(|w: &mut intenset::W| {
             w.txdrdy().set()
         });
+        //self.uart.txd.write(|w: &mut txd::W| unsafe{w.txd().bits(0)});
     }
 
     /// Pushes a single byte over uart
@@ -113,20 +116,32 @@ impl UartDriver {
 /// Interrupt handler for UART0
 /// It's called when the enabled interrupts for uart0 are triggered
 unsafe fn UART0() {
+    cortex_m::interrupt::disable();
+    hprintln!("interrupt");
     // get the global UART driver
+    if UART.modify(|uart|{
+        uart.uart.events_txdrdy.read().bits()
+    }) == 1{
+        UART.modify(|uart| uart.uart.events_txdrdy.reset());
+        UART.modify(|uart| {
+            if !uart.buffer.is_empty(){
+                let byte = uart.buffer.read_byte().unwrap();
+                unsafe {uart.uart.txd.write(|w: &mut txd::W| w.txd().bits(byte));}
+                uart.tx_filled = true;
+            }
+            else { uart.tx_filled = false; }
+        });
+    }else if UART.modify(|uart|{
+        uart.uart.events_rxdrdy.read().bits()
+    }) == 1 {
+        UART.modify(|uart| uart.uart.events_rxdrdy.reset());
+        UART.modify(|uart| {
+            let byte = uart.uart.rxd.read().bits() as u8;
+            uart.buffer.write_byte(byte);
+        });
+    }else{
+        hprintln!("none");
+    }
 
-    // //let perip = nrf51_pac::
-    // UART.modify(|uart: &UartDriver|{
-    //     if uart.uart.events_rxdrdy.
-    // })
-    UART.modify(|uart| uart.uart.intenclr.write(|w| w.txdrdy().clear()));
-    UART.modify(|uart| uart.uart.intenclr.write(|w| w.rxdrdy().clear()));
-    //UART.modify(|uart: &UartDriver| uart.buffer.read_byte());
-    hprintln!("I am here3");
-    hprintln!("I am here2");
-    hprintln!("I am here1");
-    hprintln!("I am here0");
-    asm::delay(2500000);
-    UART.modify(|uart| uart.uart.intenset.write(|w| w.txdrdy().set()));
-    UART.modify(|uart| uart.uart.intenset.write(|w| w.rxdrdy().set()));
+    //UART.modify(|uart| hprintln!("{}",uart.buffer.read_byte().unwrap()));
 }

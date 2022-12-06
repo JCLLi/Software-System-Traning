@@ -29,6 +29,7 @@ use uart_driver::UartDriver;
 use data_format::ExampleProtocol;
 
 use cortex_m_rt::entry;
+use cortex_m_semihosting::hprintln;
 
 #[global_allocator]
 static ALLOCATOR: CortexMHeap = CortexMHeap::empty();
@@ -62,8 +63,11 @@ fn main() -> ! {
     // then infinitely listen for messages. Read them into buf, deserialize them, create
     // a response, serialize the response and write it back to the UART.
     let mut buf = [0u8; 64];
+    let mut a = 0;
+
     loop {
-        {
+        a = a + 1;
+        {   //hprintln!("{}",a);
             let r = UART.modify(|uart| uart.get_bytes(&mut buf));
 
             if let Ok((s, size)) = ExampleProtocol::from_uart(&buf[..r]) {
@@ -73,6 +77,7 @@ fn main() -> ! {
                 let len = match s {
                     ExampleProtocol::Number(n) => {
                         let v = ExampleProtocol::Number(n + 1);
+                        //hprintln!("iam here");
                         v.to_uart(&mut b).unwrap()
                     }
                     ExampleProtocol::Text(s) => {
@@ -87,7 +92,14 @@ fn main() -> ! {
                         }
                     }
                 };
-                UART.modify(|uart| uart.put_bytes(&b[0..len]));
+                UART.modify(|uart| {
+                    uart.put_bytes(&b[0..len]);
+                    if !uart.tx_filled{
+                        hprintln!("empty");
+                        let byte: u8 = uart.buffer.read_byte().unwrap();
+                        unsafe {uart.uart.txd.write(|w: &mut nrf51_pac::uart0::txd::W| w.txd().bits(byte));}
+                    }
+                });
             }
         }
 
