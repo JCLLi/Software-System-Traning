@@ -117,31 +117,30 @@ impl UartDriver {
 /// It's called when the enabled interrupts for uart0 are triggered
 unsafe fn UART0() {
     cortex_m::interrupt::disable();
-    hprintln!("interrupt");
-    // get the global UART driver
-    if UART.modify(|uart|{
-        uart.uart.events_txdrdy.read().bits()
-    }) == 1{
-        UART.modify(|uart| uart.uart.events_txdrdy.reset());
-        UART.modify(|uart| {
-            if !uart.buffer.is_empty(){
-                let byte = uart.buffer.read_byte().unwrap();
-                unsafe {uart.uart.txd.write(|w: &mut txd::W| w.txd().bits(byte));}
-                uart.tx_filled = true;
-            }
-            else { uart.tx_filled = false; }
-        });
-    }else if UART.modify(|uart|{
-        uart.uart.events_rxdrdy.read().bits()
-    }) == 1 {
-        UART.modify(|uart| uart.uart.events_rxdrdy.reset());
-        UART.modify(|uart| {
-            let byte = uart.uart.rxd.read().bits() as u8;
-            uart.buffer.write_byte(byte);
-        });
-    }else{
-        hprintln!("none");
-    }
+    hprintln!("The interrupt occured");
 
-    //UART.modify(|uart| hprintln!("{}",uart.buffer.read_byte().unwrap()));
+    UART.modify(|uart| if uart.uart.events_rxdrdy.read().bits() != 0 {
+        uart.uart.events_rxdrdy.reset();
+        let byte = uart.uart.rxd.read().bits() as u8;
+        if !uart.buffer.is_full() {
+            uart.buffer.write_byte(byte).unwrap();
+            hprintln!("Now reading {}", byte as char);
+        }else {
+            uart.buffer.overwrite(byte);
+            hprintln!("Now OVERwriting reading {}", byte as char);
+        }
+    });
+
+    UART.modify(|uart| if uart.uart.events_txdrdy.read().bits() != 0 {
+        uart.uart.events_txdrdy.reset();
+        if !uart.buffer.is_empty() {
+            let byte = uart.buffer.read_byte().unwrap();
+            unsafe {uart.uart.txd.write(|w: &mut txd::W| w.txd().bits(byte));}
+            uart.tx_filled = true;
+            hprintln!("Now sending {}", byte as char);
+        }else {
+            uart.tx_filled = false;
+        }
+        
+    });
 }

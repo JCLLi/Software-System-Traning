@@ -95,7 +95,7 @@ fn main() -> ! {
                 UART.modify(|uart| {
                     uart.put_bytes(&b[0..len]);
                     if !uart.tx_filled{
-                        hprintln!("empty");
+                        hprintln!("Nothing to send on TXD");
                         let byte: u8 = uart.buffer.read_byte().unwrap();
                         unsafe {uart.uart.txd.write(|w: &mut nrf51_pac::uart0::txd::W| w.txd().bits(byte));}
                     }
