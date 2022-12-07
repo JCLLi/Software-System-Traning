@@ -21,7 +21,7 @@ impl<T> OnceCell<T> {
 
     /// Sometimes you want to create a cell that is already initialized.
     pub fn new_with(_v: T) -> Self {
-        todo!()
+        Self { uart_driver: Some(_v) }
     }
 
     /// This can initialize an empty cell.
