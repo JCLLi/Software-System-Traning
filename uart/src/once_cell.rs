@@ -1,4 +1,4 @@
-use core::cell::UnsafeCell;
+use core::cell::{UnsafeCell, OnceCell};
 use core::marker::PhantomData;
 use core::ops::{Deref, DerefMut};
 use core::panic;
@@ -20,8 +20,8 @@ impl<T> OnceCell<T> {
     }
 
     /// Sometimes you want to create a cell that is already initialized.
-    pub fn new_with(_v: T) -> Self {
-        Self { uart_driver: Some(_v) }
+    pub fn new_with(v: T) -> Self {
+        Self { uart_driver: Some(v) }
     }
 
     /// This can initialize an empty cell.
