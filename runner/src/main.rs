@@ -57,6 +57,7 @@ fn main() {
                                         -a/add:         Add a note\n
                                         -d/delete:      Delete a note\n
                                         -r/read:        Read a note\n
+                                        exit:           Exit program\n
 
                             Message:    Whatever you want to store in the note\n
 
@@ -71,6 +72,7 @@ fn main() {
                                         -a/add:         Add a note\n
                                         -d/delete:      Delete a note\n
                                         -r/read:        Read a note\n
+                                        exit:           Exit program\n
 
                             Message:    Whatever you want to store in the note\n
 
