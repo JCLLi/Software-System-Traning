@@ -124,10 +124,10 @@ unsafe fn UART0() {
         let byte = uart.uart.rxd.read().bits() as u8;
         if !uart.buffer.is_full() {
             uart.buffer.write_byte(byte).unwrap();
-            hprintln!("Now reading {}", byte as char);
+            hprintln!("Now reading {} from RXD into ringbuffer", byte as char);
         }else {
             uart.buffer.overwrite(byte);
-            hprintln!("Now OVERwriting reading {}", byte as char);
+            hprintln!("Now reading {} from RXD and OVERwriting into ringbuffer", byte as char);
         }
     });
 
@@ -137,7 +137,7 @@ unsafe fn UART0() {
             let byte = uart.buffer.read_byte().unwrap();
             unsafe {uart.uart.txd.write(|w: &mut txd::W| w.txd().bits(byte));}
             uart.tx_filled = true;
-            hprintln!("Now sending {}", byte as char);
+            hprintln!("Now sending {} from ringbuffer via TXD", byte as char);
         }else {
             uart.tx_filled = false;
         }
