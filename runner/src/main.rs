@@ -1,6 +1,6 @@
 use std::{
     env::args,
-    io::{Read, Write},
+    io::{Read, Write, self},
 };
 
 use tudelft_arm_qemu_runner as runner;
@@ -10,42 +10,52 @@ use tudelft_arm_qemu_runner as runner;
 /// Later on, for the "interface" and "communication" requirements, you should
 /// modify the runner to work with your protocol and your interface.
 fn main() {
-    println!("Hello, runner!");
-    let binary = args().nth(1).unwrap();
+    loop {
+        // The code below basically starts the qemu
+        println!("Hello, runner! Please provied your input!"); // If random stuff is input, display the instruction to call help
+        let binary = args().nth(1).unwrap();
+        // println!("{} is inside the binary", binary);
+        let mut runner = runner::Runner::new(&binary).unwrap();
+        if runner.testing {
+            runner.wait_for_tests();
+            return;
+        }
 
-    let mut runner = runner::Runner::new(&binary).unwrap();
-    if runner.testing {
-        runner.wait_for_tests();
-        return;
-    }
-    let to_send = [
-        ExampleProtocol::Number(1),
-        ExampleProtocol::Text("Hello".to_string()),
-    ];
-    let to_receive = [
-        ExampleProtocol::Number(2),
-        ExampleProtocol::Text("World".to_string()),
-    ];
-    let mut v = vec![];
-    for (s, r) in to_send.into_iter().zip(to_receive) {
-        println!("Now Writing: {:?}", s);
-        let mut buf = [0; 1024];
-        let size = s.to_uart(&mut buf).unwrap();
-        runner.write_all(&buf[..size]).unwrap();
-        let w = loop {
-            let mut buf = [0; 255];
-            let r = runner.read(&mut buf).unwrap();
-            v.write_all(&buf[..r]).unwrap();
-            let res = ExampleProtocol::from_uart(&v);
-            if let Ok((res, read)) = res {
-                v = v.into_iter().skip(read).collect();
-                break res;
+        // Get the things user iput from terminal -> user_input
+        let mut user_input = String::new();
+        let stdin = io::stdin();
+        stdin.read_line(&mut user_input).expect("What you have input is not valid");
+        println!("{} has been read from the terminal", user_input);
+
+        let to_send = [
+            ExampleProtocol::Number(1),
+            ExampleProtocol::Text("Hello".to_string()),
+        ];
+        let to_receive = [
+            ExampleProtocol::Number(2),
+            ExampleProtocol::Text("World".to_string()),
+        ];
+        let mut v = vec![];
+        for (s, r) in to_send.into_iter().zip(to_receive) {
+            println!("Now Writing: {:?}", s);
+            let mut buf = [0; 1024];
+            let size = s.to_uart(&mut buf).unwrap();
+            runner.write_all(&buf[..size]).unwrap();
+            let w = loop {
+                let mut buf = [0; 255];
+                let r = runner.read(&mut buf).unwrap();
+                v.write_all(&buf[..r]).unwrap();
+                let res = ExampleProtocol::from_uart(&v);
+                if let Ok((res, read)) = res {
+                    v = v.into_iter().skip(read).collect();
+                    break res;
+                }
+            };
+            if w != r {
+                println!("Input {:?} failed: got {:?}, expected {:?}", s, w, r);
+            } else {
+                println!("Input {:?} succeeded", s);
             }
-        };
-        if w != r {
-            println!("Input {:?} failed: got {:?}, expected {:?}", s, w, r);
-        } else {
-            println!("Input {:?} succeeded", s);
         }
     }
 }
