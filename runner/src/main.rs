@@ -44,7 +44,7 @@ fn main() {
 
         // Now parse the user_input
         let commands = user_input.as_str().split("-").collect::<Vec<&str>>();
-        if commands.len() != 3 {
+        if commands.len() != 3 && !(user_input.as_str() == "help\n" || user_input.as_str() == "-h\n" || user_input.as_str() == "exit\n") {
             println!("Please provide the command in the right format! Enter -h for help!");
             continue;
         }
@@ -77,6 +77,15 @@ fn main() {
                             ID:         The ID you get for each note you store\n
                             ");
                 continue;
+            },
+            "exit\n" => {
+                panic!("
+                ---------------------------------------------------------------------\n
+                |                                                                    |\n
+                |             Program ended, see you next time Runner!               |\n
+                |                                                                    |\n
+                ---------------------------------------------------------------------\n
+                ");
             },
             _ => {
                 // println!("Please provide a valid command");
