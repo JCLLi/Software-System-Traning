@@ -10,9 +10,25 @@ use tudelft_arm_qemu_runner as runner;
 /// Later on, for the "interface" and "communication" requirements, you should
 /// modify the runner to work with your protocol and your interface.
 fn main() {
+    let mut fault = false;
+    let mut already_start = false;
     loop {
+        if already_start == false {
+            println!("
+                  ---------------------------------------------------------------------\n
+                  |                                                                    |\n
+                  |   Dear Runner! Please provide your input! Enter -h/help for help   |\n
+                  |                                                                    |\n
+                  ---------------------------------------------------------------------\n
+                  "); // If random stuff is input, display the instruction to call help
+        }
+        already_start = true;
+        if fault == true {
+            println!("Dear Runner! Please provide a valid input! Enter -h for help!");
+        }
+        fault = false;
+
         // The code below basically starts the qemu
-        println!("Hello, runner! Please provied your input!"); // If random stuff is input, display the instruction to call help
         let binary = args().nth(1).unwrap();
         // println!("{} is inside the binary", binary);
         let mut runner = runner::Runner::new(&binary).unwrap();
@@ -25,7 +41,49 @@ fn main() {
         let mut user_input = String::new();
         let stdin = io::stdin();
         stdin.read_line(&mut user_input).expect("What you have input is not valid");
-        println!("{} has been read from the terminal", user_input);
+
+        // Now parse the user_input
+        let commands = user_input.as_str().split("-").collect::<Vec<&str>>();
+        if commands.len() != 3 {
+            println!("Please provide the command in the right format! Enter -h for help!");
+            continue;
+        }
+
+        match user_input.as_str() {
+            "help\n" => {
+                println!("
+                          Format of command: [command]-[message]-[ID]\n
+                            Commands:   -h/help:        Display help message\n
+                                        -a/add:         Add a note\n
+                                        -d/delete:      Delete a note\n
+                                        -r/read:        Read a note\n
+
+                            Message:    Whatever you want to store in the note\n
+
+                            ID:         The ID you get for each note you store\n
+                            ");
+                continue;
+            }
+             "-h\n" => {
+                println!("
+                          Format of command: [command]-[message]-[ID]\n
+                            Commands:   -h/help:        Display help message\n
+                                        -a/add:         Add a note\n
+                                        -d/delete:      Delete a note\n
+                                        -r/read:        Read a note\n
+
+                            Message:    Whatever you want to store in the note\n
+
+                            ID:         The ID you get for each note you store\n
+                            ");
+                continue;
+            },
+            _ => {
+                // println!("Please provide a valid command");
+                fault = true;
+                continue;
+            },
+        }
 
         let to_send = [
             ExampleProtocol::Number(1),
@@ -72,6 +130,22 @@ pub enum UartError {
 ///
 /// Note that here all serialization is done manually. For the assignment you should use postacrd,
 /// which automates complicated deserializing from and to bytes.
+
+const MAGIC_NUMBER: u32 = 0x6969;
+pub struct NewProtocol {
+    start_num: u32,
+    address: u8,
+    function: u8,
+    ID: u8,
+    data_len:u8,
+    data: String,
+    valid: u8,
+    end_num: u32,
+}
+
+
+
+
 #[derive(Debug, PartialEq, Eq)]
 pub enum ExampleProtocol {
     Number(usize),
