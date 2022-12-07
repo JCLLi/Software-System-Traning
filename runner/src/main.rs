@@ -44,7 +44,7 @@ fn main() {
 
         // Now parse the user_input
         let commands = user_input.as_str().split("-").collect::<Vec<&str>>();
-        if commands.len() != 3 && !(user_input.as_str() == "help\n" || user_input.as_str() == "-h\n" || user_input.as_str() == "exit\n") {
+        if commands.len() != 2 && !(user_input.as_str() == "help\n" || user_input.as_str() == "-h\n" || user_input.as_str() == "exit\n") {
             println!("Please provide the command in the right format! Enter -h for help!");
             continue;
         }
@@ -52,7 +52,7 @@ fn main() {
         match user_input.as_str() {
             "help\n" => {
                 println!("
-                          Format of command: [command]-[message]-[ID]\n
+                          Format of command: [command]-[message] or [ID]\n
                             Commands:   -h/help:        Display help message\n
                                         -a/add:         Add a note\n
                                         -d/delete:      Delete a note\n
@@ -67,7 +67,7 @@ fn main() {
             }
              "-h\n" => {
                 println!("
-                          Format of command: [command]-[message]-[ID]\n
+                          Format of command: [command]-[message] or [ID]\n
                             Commands:   -h/help:        Display help message\n
                                         -a/add:         Add a note\n
                                         -d/delete:      Delete a note\n
