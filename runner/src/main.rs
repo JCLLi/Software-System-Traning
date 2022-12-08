@@ -15,6 +15,11 @@ use heapless::Vec;
 /// Later on, for the "interface" and "communication" requirements, you should
 /// modify the runner to work with your protocol and your interface.
 fn main() {
+    // let mut a:u32 = 0xffffffff;
+    // for i in 0..4 {
+    //     a = a >> (i * 2);
+    //     println!("{:#0x}", a);
+    // }
     let mut fault = false;
     let mut already_start = false;
     loop {
@@ -166,7 +171,7 @@ pub struct NewProtocol<'a> {
     start_num: [u8; 2],
     function: u8,
     id: u8,
-    data_len:u8,
+    data_len: u16,
     data: &'a str,
     check_sum: [u8; 4],
 }
@@ -184,17 +189,35 @@ pub enum Function{
     DELETE,
 }
 
-impl<'a> NewProtocolCmd<'a> {
-    pub fn new_to_uart(dest: &mut [u8], function: Function, note: String, ) -> Result<usize, UartError> {
+impl<'a> NewProtocol<'a> {
+    pub fn new_to_uart(dest: &mut [u8], function: Function, note: String, id: u8) -> Result<usize, UartError> {
+        let note_str = note.as_str();
+        let note_byte = note_str.as_bytes();
+        let mut sum: u32 = 0x00;
+        for i in 0..note_byte.len(){
+            sum += note_byte[i as usize] as u32;
+        }
+        let mut checksum:[u8; 4] = [0, 0, 0, 0];
+        for i in 0..4{
+            sum = sum >> i * 4;
+            checksum[i] = (sum & 0xff) as u8;
+        }
         match function {
             Function::ADD=> {
-                todo!()
-                // let output: Vec<u8, 1024> = to_vec(message).unwrap();
-                // if output.len() > 1024 {
-                //     return Err(UartError::TooManyBytes);
-                // }
+                let output = NewProtocol{
+                    start_num: [0x69, 0x69],
+                    function: 0x01,
+                    id,
+                    data_len: note_str.len() as u16,
+                    data: note_str,
+                    check_sum: [0, 0, 0, 0],
+                };
+                let serial: Vec<u8, 1024> = to_vec(&output).unwrap();
 
-                //Ok(output.len())
+                if serial.len() > 1024 {
+                    return Err(UartError::TooManyBytes);
+                }
+                Ok(serial.len())
             },
            Function::READ => {
                 todo!()
