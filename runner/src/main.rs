@@ -53,7 +53,7 @@ fn main() {
         stdin.read_line(&mut user_input).expect("What you have input is not valid");
 
         // Now parse the user_input
-        let commands = user_input.as_str().split("-").collect::<std::vec::Vec<&str>>();
+        let commands = user_input.as_str().split(" ").collect::<std::vec::Vec<&str>>();
         if commands.len() != 2 && !(user_input.as_str() == "help\n" || user_input.as_str() == "-h\n" || user_input.as_str() == "exit\n") {
             println!("Please provide the command in the right format! Enter -h for help!");
             continue;
@@ -62,7 +62,7 @@ fn main() {
         match user_input.as_str() {
             "help\n" => {
                 println!("
-                          Format of command: [command]-[message] or [ID]\n
+                          Format of command: [command]  [message] or [ID]\n
                             Commands:   -h/help:        Display help message\n
                                         -a/add:         Add a note\n
                                         -d/delete:      Delete a note\n
@@ -94,9 +94,61 @@ fn main() {
                 break;
             },
             _ => {
-                // println!("Please provide a valid command");
-                fault = true;
-                continue;
+                match commands[0] {
+                    "-a" => {
+                        println!("Function not yet implemented!");
+                    },
+                    "add" => {
+                        println!("Function not yet implemented!");
+                    },
+                    "-d" => {
+                        match commands[1].trim().parse::<u8>() {
+                            Ok(id) => {
+                                println!("todo!(), pass things to the to_uart function");
+                            },
+                            Err(_) => {
+                                fault = true;
+                                continue;
+                            },
+                        }
+                    },
+                    "delete" => {
+                        match commands[1].trim().parse::<u8>() {
+                            Ok(id) => {
+                                println!("todo!(), pass things to the to_uart function");
+                            },
+                            Err(_) => {
+                                fault = true;
+                                continue;
+                            },
+                        }
+                    },
+                    "-r" => {
+                        match commands[1].trim().parse::<u8>() {
+                            Ok(id) => {
+                                println!("todo!(), pass things to the to_uart function");
+                            },
+                            Err(_) => {
+                                fault = true;
+                                continue;
+                            },
+                        }
+                    },
+                    "read" => {
+                        match commands[1].trim().parse::<u8>() {
+                            Ok(id) => {
+                                println!("todo!(), pass things to the to_uart function");
+                            },
+                            Err(_) => {
+                                fault = true;
+                                continue;
+                            },
+                        }
+                    },
+                    _ => {
+                        println!("Please provide a valid command. Enter -h/help for help!");
+                    },
+                }
             },
         }
 
