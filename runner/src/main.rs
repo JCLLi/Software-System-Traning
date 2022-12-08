@@ -81,13 +81,7 @@ fn main() {
                 continue;
             },
             "exit\n" => {
-                panic!("
-                ---------------------------------------------------------------------\n
-                |                                                                    |\n
-                |             Program ended, see you next time Runner!               |\n
-                |                                                                    |\n
-                ---------------------------------------------------------------------\n
-                ");
+                break;
             },
             _ => {
                 // println!("Please provide a valid command");
@@ -127,6 +121,13 @@ fn main() {
             }
         }
     }
+    println!("
+                ---------------------------------------------------------------------\n
+                |                                                                    |\n
+                |             Program ended, see you next time Runner!               |\n
+                |                                                                    |\n
+                ---------------------------------------------------------------------\n
+                ");
 }
 
 /// The different kinds of errors that can occur when working with UART
