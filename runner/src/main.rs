@@ -243,41 +243,81 @@ pub enum Function{
 
 impl<'a> NewProtocol<'a> {
     pub fn new_to_uart(dest: &mut [u8], function: Function, note: String, id: u8) -> Result<usize, UartError> {
-        let note_str = note.as_str();
-        let note_byte = note_str.as_bytes();
-        let mut sum: u32 = 0x00;
-        for i in 0..note_byte.len(){
-            sum += note_byte[i as usize] as u32;
-        }
-        let mut checksum:[u8; 4] = [0, 0, 0, 0];
-        for i in 0..4{
-            sum = sum >> i * 4;
-            checksum[i] = (sum & 0xff) as u8;
-        }
         match function {
             Function::ADD=> {
+                let note_str = note.as_str();
+                let note_byte = note_str.as_bytes();
+
+                if note_byte.len() > 1014 {
+                    return Err(UartError::TooManyBytes);
+                }
+
+                let mut sum: u32 = 0x00;
+                for i in 0..note_byte.len(){
+                    sum += note_byte[i as usize] as u32;
+                }
+                sum = sum + 0x69 + 0x69 + 0x01 + id as u32 + note.len() as u32;
+                let mut check_sum:[u8; 4] = [0, 0, 0, 0];
+                for i in 0..4{
+                    sum = sum >> i * 4;
+                    check_sum[i] = (sum & 0xff) as u8;
+                }
                 let output = NewProtocol{
                     start_num: [0x69, 0x69],
                     function: 0x01,
                     id,
                     data_len: note_str.len() as u16,
                     data: note_str,
-                    check_sum: [0, 0, 0, 0],
+                    check_sum,
                 };
                 let serial: Vec<u8, 1024> = to_vec(&output).unwrap();
+                for i in 0..serial.len(){
+                    dest[i] = serial[i];
+                }
 
-                if serial.len() > 1024 {
-                    return Err(UartError::TooManyBytes);
+                Ok(serial.len())
+            },
+            Function::READ => {
+                let mut sum = 0x69 + 0x69 + 0x02 + id as u32;
+                let mut check_sum:[u8; 4] = [0, 0, 0, 0];
+                for i in 0..4{
+                    sum = sum >> i * 4;
+                    check_sum[i] = (sum & 0xff) as u8;
+                }
+                let output = NewProtocol{
+                    start_num: [0x69, 0x69],
+                    function: 0x02,
+                    id,
+                    data_len: 0,
+                    data: "",
+                    check_sum,
+                };
+                let serial: Vec<u8, 1024> = to_vec(&output).unwrap();
+                for i in 0..serial.len(){
+                    dest[i] = serial[i];
                 }
                 Ok(serial.len())
             },
-           Function::READ => {
-                todo!()
-
-            },
             Function::DELETE => {
-                todo!()
-
+                let mut sum = 0x69 + 0x69 + 0x03 + id as u32;
+                let mut check_sum:[u8; 4] = [0, 0, 0, 0];
+                for i in 0..4{
+                    sum = sum >> i * 4;
+                    check_sum[i] = (sum & 0xff) as u8;
+                }
+                let output = NewProtocol{
+                    start_num: [0x69, 0x69],
+                    function: 0x03,
+                    id,
+                    data_len: 0,
+                    data: "",
+                    check_sum,
+                };
+                let serial: Vec<u8, 1024> = to_vec(&output).unwrap();
+                for i in 0..serial.len(){
+                    dest[i] = serial[i];
+                }
+                Ok(serial.len())
             },
         }
 
