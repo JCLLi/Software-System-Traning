@@ -83,6 +83,10 @@ fn main() {
                 match commands[0] {
                     "-a" | "add" => {
                         NewProtocol::new_to_uart(&mut buf, ADD, String::from(commands[1]), 0);
+                        runner.write_all(&buf);
+                        // let input = loop{
+                        //     let r = runner.read(&mut buf).unwrap();
+                        // }
                     },
                     "-d" | "delete" => {
                         match commands[1].trim().parse::<u8>() {
@@ -112,6 +116,7 @@ fn main() {
                 }
             },
         }
+
         // let mut input: Vec<u8, 1024> = heapless::Vec::new();
         // for i in 0..1024{
         //     input.push(buf[i]);
@@ -204,12 +209,6 @@ pub struct NewProtocol<'a> {
     check_sum: [u8; 4],
 }
 
-#[derive(Debug, PartialEq, Eq)]
-pub enum NewProtocolCmd<'a>{
-    ADD(NewProtocol<'a>),
-    READ(NewProtocol<'a>),
-    DELETE(NewProtocol<'a>),
-}
 
 pub enum Function{
     ADD,
@@ -302,6 +301,15 @@ impl<'a> NewProtocol<'a> {
         }
 
     }
+
+    // pub fn new_from_uart(src: &mut [u8]) -> Result<(Self, usize), UartError> {
+    //     let mut input: Vec<u8, 1024> = heapless::Vec::new();
+    //     for i in 0..1024{
+    //         input.push(src[i]);
+    //     }
+    //     let input_data: NewProtocol = from_bytes(input.deref()).unwrap();
+    //     Ok((input_data, 1))
+    // }
 }
 
 
