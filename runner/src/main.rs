@@ -5,6 +5,11 @@ use std::{
 
 use tudelft_arm_qemu_runner as runner;
 
+use core::ops::Deref;
+use serde::{Serialize, Deserialize};
+use postcard::{from_bytes, to_vec};
+use heapless::Vec;
+
 /// This is the "runner" side entry point. This will start the emulator, and then
 /// communicate with the emulator over uart (once you implement your driver).
 /// Later on, for the "interface" and "communication" requirements, you should
@@ -43,7 +48,7 @@ fn main() {
         stdin.read_line(&mut user_input).expect("What you have input is not valid");
 
         // Now parse the user_input
-        let commands = user_input.as_str().split("-").collect::<Vec<&str>>();
+        let commands = user_input.as_str().split("-").collect::<std::vec::Vec<&str>>();
         if commands.len() != 2 && !(user_input.as_str() == "help\n" || user_input.as_str() == "-h\n" || user_input.as_str() == "exit\n") {
             println!("Please provide the command in the right format! Enter -h for help!");
             continue;
@@ -89,6 +94,19 @@ fn main() {
                 continue;
             },
         }
+
+        let my_message = NewProtocol {
+            start_num: 0x6969,
+            function: 0x01,
+            id: 0x01,
+            data_len: 0x05,
+            data: "FUCKU",
+            check_sum: 0x01,
+        };
+        let to_send: NewProtocolCmd;
+        let to_receive: NewProtocolCmd;
+        let mut buf = [0; 1024];
+        to_send.new_to_uart(&mut buf, &my_message);
 
         let to_send = [
             ExampleProtocol::Number(1),
@@ -142,17 +160,45 @@ pub enum UartError {
 ///
 /// Note that here all serialization is done manually. For the assignment you should use postacrd,
 /// which automates complicated deserializing from and to bytes.
-
-const MAGIC_NUMBER: u32 = 0x6969;
-pub struct NewProtocol {
+/// 
+#[derive(Serialize, Deserialize, Debug, Eq, PartialEq)]
+pub struct NewProtocol<'a> {
     start_num: u32,
-    address: u8,
     function: u8,
-    ID: u8,
+    id: u8,
     data_len:u8,
-    data: String,
-    valid: u8,
-    end_num: u32,
+    data: &'a str,
+    check_sum: u32,
+}
+
+#[derive(Debug, PartialEq, Eq)]
+pub enum NewProtocolCmd<'a>{
+    ADD(NewProtocol<'a>),
+    READ(NewProtocol<'a>),
+    DELETE(NewProtocol<'a>),
+}
+
+impl<'a> NewProtocolCmd<'a> {
+    pub fn new_to_uart(&self, dest: &mut [u8], message: &NewProtocol) -> Result<usize, UartError> {
+        match self {
+            NewProtocolCmd::ADD(message) => {
+                let output: Vec<u8, 1024> = to_vec(message).unwrap();
+                if output.len() > 1024 {
+                    return Err(UartError::TooManyBytes);
+                }
+                Ok(output.len())
+            },
+            NewProtocolCmd::READ(message) => {
+                todo!()
+
+            },
+            NewProtocolCmd::DELETE(message) => {
+                todo!()
+
+            },
+        }
+
+    }
 }
 
 
