@@ -428,8 +428,11 @@ dependencies = [
  "cortex-m",
  "cortex-m-rt",
  "cortex-m-semihosting",
+ "heapless",
  "nrf51-hal",
  "nrf51-pac",
+ "postcard",
+ "serde",
 ]
 
 [[package]]

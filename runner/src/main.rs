@@ -95,49 +95,49 @@ fn main() {
             },
         }
 
-        let my_message = NewProtocol {
-            start_num: 0x6969,
-            function: 0x01,
-            id: 0x01,
-            data_len: 0x05,
-            data: "FUCKU",
-            check_sum: 0x01,
-        };
-        let to_send: NewProtocolCmd;
-        let to_receive: NewProtocolCmd;
-        let mut buf = [0; 1024];
-        to_send.new_to_uart(&mut buf, &my_message);
-
-        let to_send = [
-            ExampleProtocol::Number(1),
-            ExampleProtocol::Text("Hello".to_string()),
-        ];
-        let to_receive = [
-            ExampleProtocol::Number(2),
-            ExampleProtocol::Text("World".to_string()),
-        ];
-        let mut v = vec![];
-        for (s, r) in to_send.into_iter().zip(to_receive) {
-            println!("Now Writing: {:?}", s);
-            let mut buf = [0; 1024];
-            let size = s.to_uart(&mut buf).unwrap();
-            runner.write_all(&buf[..size]).unwrap();
-            let w = loop {
-                let mut buf = [0; 255];
-                let r = runner.read(&mut buf).unwrap();
-                v.write_all(&buf[..r]).unwrap();
-                let res = ExampleProtocol::from_uart(&v);
-                if let Ok((res, read)) = res {
-                    v = v.into_iter().skip(read).collect();
-                    break res;
-                }
-            };
-            if w != r {
-                println!("Input {:?} failed: got {:?}, expected {:?}", s, w, r);
-            } else {
-                println!("Input {:?} succeeded", s);
-            }
-        }
+        // let my_message = NewProtocol {
+        //     start_num: 0x6969,
+        //     function: 0x01,
+        //     id: 0x01,
+        //     data_len: 0x05,
+        //     data: "FUCKU",
+        //     check_sum: 0x01,
+        // };
+        // let to_send: NewProtocolCmd;
+        // let to_receive: NewProtocolCmd;
+        // let mut buf = [0; 1024];
+        // to_send.new_to_uart(&mut buf, &my_message);
+        //
+        // let to_send = [
+        //     ExampleProtocol::Number(1),
+        //     ExampleProtocol::Text("Hello".to_string()),
+        // ];
+        // let to_receive = [
+        //     ExampleProtocol::Number(2),
+        //     ExampleProtocol::Text("World".to_string()),
+        // ];
+        // let mut v = vec![];
+        // for (s, r) in to_send.into_iter().zip(to_receive) {
+        //     println!("Now Writing: {:?}", s);
+        //     let mut buf = [0; 1024];
+        //     let size = s.to_uart(&mut buf).unwrap();
+        //     runner.write_all(&buf[..size]).unwrap();
+        //     let w = loop {
+        //         let mut buf = [0; 255];
+        //         let r = runner.read(&mut buf).unwrap();
+        //         v.write_all(&buf[..r]).unwrap();
+        //         let res = ExampleProtocol::from_uart(&v);
+        //         if let Ok((res, read)) = res {
+        //             v = v.into_iter().skip(read).collect();
+        //             break res;
+        //         }
+        //     };
+        //     if w != r {
+        //         println!("Input {:?} failed: got {:?}, expected {:?}", s, w, r);
+        //     } else {
+        //         println!("Input {:?} succeeded", s);
+        //     }
+        // }
     }
     println!("
                 ---------------------------------------------------------------------\n
@@ -163,12 +163,12 @@ pub enum UartError {
 /// 
 #[derive(Serialize, Deserialize, Debug, Eq, PartialEq)]
 pub struct NewProtocol<'a> {
-    start_num: u32,
+    start_num: [u8; 2],
     function: u8,
     id: u8,
     data_len:u8,
     data: &'a str,
-    check_sum: u32,
+    check_sum: [u8; 4],
 }
 
 #[derive(Debug, PartialEq, Eq)]
@@ -178,21 +178,29 @@ pub enum NewProtocolCmd<'a>{
     DELETE(NewProtocol<'a>),
 }
 
+pub enum Function{
+    ADD,
+    READ,
+    DELETE,
+}
+
 impl<'a> NewProtocolCmd<'a> {
-    pub fn new_to_uart(&self, dest: &mut [u8], message: &NewProtocol) -> Result<usize, UartError> {
-        match self {
-            NewProtocolCmd::ADD(message) => {
-                let output: Vec<u8, 1024> = to_vec(message).unwrap();
-                if output.len() > 1024 {
-                    return Err(UartError::TooManyBytes);
-                }
-                Ok(output.len())
+    pub fn new_to_uart(dest: &mut [u8], function: Function, note: String, ) -> Result<usize, UartError> {
+        match function {
+            Function::ADD=> {
+                todo!()
+                // let output: Vec<u8, 1024> = to_vec(message).unwrap();
+                // if output.len() > 1024 {
+                //     return Err(UartError::TooManyBytes);
+                // }
+
+                //Ok(output.len())
             },
-            NewProtocolCmd::READ(message) => {
+           Function::READ => {
                 todo!()
 
             },
-            NewProtocolCmd::DELETE(message) => {
+            Function::DELETE => {
                 todo!()
 
             },
