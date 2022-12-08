@@ -9,6 +9,7 @@ use core::ops::Deref;
 use serde::{Serialize, Deserialize};
 use postcard::{from_bytes, to_vec};
 use heapless::Vec;
+use crate::Function::{ADD, DELETE, READ};
 
 /// This is the "runner" side entry point. This will start the emulator, and then
 /// communicate with the emulator over uart (once you implement your driver).
@@ -58,9 +59,9 @@ fn main() {
             println!("Please provide the command in the right format! Enter -h for help!");
             continue;
         }
-
+        let mut buf = [0; 1024];
         match user_input.as_str() {
-            "help\n" => {
+            "help\n" | "-h\n" => {
                 println!("
                           Format of command: [command]  [message] or [ID]\n
                             Commands:   -h/help:        Display help message\n
@@ -75,36 +76,18 @@ fn main() {
                             ");
                 continue;
             }
-             "-h\n" => {
-                println!("
-                          Format of command: [command]-[message] or [ID]\n
-                            Commands:   -h/help:        Display help message\n
-                                        -a/add:         Add a note\n
-                                        -d/delete:      Delete a note\n
-                                        -r/read:        Read a note\n
-                                        exit:           Exit program\n
-
-                            Message:    Whatever you want to store in the note\n
-
-                            ID:         The ID you get for each note you store\n
-                            ");
-                continue;
-            },
             "exit\n" => {
                 break;
             },
             _ => {
                 match commands[0] {
-                    "-a" => {
-                        println!("Function not yet implemented!");
+                    "-a" | "add" => {
+                        NewProtocol::new_to_uart(&mut buf, ADD, String::from(commands[1]), 0);
                     },
-                    "add" => {
-                        println!("Function not yet implemented!");
-                    },
-                    "-d" => {
+                    "-d" | "delete" => {
                         match commands[1].trim().parse::<u8>() {
                             Ok(id) => {
-                                println!("todo!(), pass things to the to_uart function");
+                                NewProtocol::new_to_uart(&mut buf, DELETE, String::from(""), id);
                             },
                             Err(_) => {
                                 fault = true;
@@ -112,32 +95,10 @@ fn main() {
                             },
                         }
                     },
-                    "delete" => {
+                    "-r" | "read" => {
                         match commands[1].trim().parse::<u8>() {
                             Ok(id) => {
-                                println!("todo!(), pass things to the to_uart function");
-                            },
-                            Err(_) => {
-                                fault = true;
-                                continue;
-                            },
-                        }
-                    },
-                    "-r" => {
-                        match commands[1].trim().parse::<u8>() {
-                            Ok(id) => {
-                                println!("todo!(), pass things to the to_uart function");
-                            },
-                            Err(_) => {
-                                fault = true;
-                                continue;
-                            },
-                        }
-                    },
-                    "read" => {
-                        match commands[1].trim().parse::<u8>() {
-                            Ok(id) => {
-                                println!("todo!(), pass things to the to_uart function");
+                                NewProtocol::new_to_uart(&mut buf, READ, String::from(""), id);
                             },
                             Err(_) => {
                                 fault = true;
@@ -151,6 +112,21 @@ fn main() {
                 }
             },
         }
+        // let mut input: Vec<u8, 1024> = heapless::Vec::new();
+        // for i in 0..1024{
+        //     input.push(buf[i]);
+        // }
+        // let a: NewProtocol = from_bytes(input.deref()).unwrap();
+        // println!("{:#0x}", a.start_num[0]);
+        // println!("{:#0x}", a.start_num[1]);
+        // println!("{:#0x}", a.function);
+        // println!("{:#0x}", a.id);
+        // println!("{:#0x}", a.data_len);
+        // println!("{}", a.data);
+        // println!("{:#0x}", a.check_sum[0]);
+        // println!("{:#0x}", a.check_sum[1]);
+        // println!("{:#0x}", a.check_sum[2]);
+        // println!("{:#0x}", a.check_sum[3]);
 
         // let my_message = NewProtocol {
         //     start_num: 0x6969,
@@ -283,6 +259,8 @@ impl<'a> NewProtocol<'a> {
                 for i in 0..4{
                     sum = sum >> i * 4;
                     check_sum[i] = (sum & 0xff) as u8;
+
+                    println!("{:#0x}", check_sum[i]);
                 }
                 let output = NewProtocol{
                     start_num: [0x69, 0x69],
@@ -304,6 +282,8 @@ impl<'a> NewProtocol<'a> {
                 for i in 0..4{
                     sum = sum >> i * 4;
                     check_sum[i] = (sum & 0xff) as u8;
+
+                    println!("{:#0x}", check_sum[i]);
                 }
                 let output = NewProtocol{
                     start_num: [0x69, 0x69],
