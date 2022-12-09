@@ -32,6 +32,7 @@ use cortex_m_rt::entry;
 use cortex_m_semihosting::hprintln;
 
 use heapless::Vec;
+use postcard::to_vec;
 use crate::data_format::Function::ADD;
 use crate::data_format::NewProtocol;
 
@@ -72,25 +73,56 @@ fn main() -> ! {
             //hprintln!("here1");
             let r = UART.modify(|uart| uart.get_bytes(&mut buf));
 
+
             for i in 0..r{
                 input.push(buf[i]);
             }
 
             if let Ok(res) = NewProtocol::new_from_uart(&input){
                 let mut buf: [u8; 29] = [0; 29];
+
                 if res.function == 0x01{
+
                    if let Ok(ID) = UART.modify(|uart| uart.save_note(res.data)) {
+                       //UART.modify(|uart| hprintln!("len: {}", uart.notes.len()));
+
                        let mut note: [u8; 20] = [0; 20];
                        for i in 0.."Done".as_bytes().len(){
                            note[i] = ("Done".as_bytes())[i];
                        }
+
                        NewProtocol::new_to_uart(&mut buf, ADD, note, ID, 4);
+
+                       /////
+
+                       // let mut sum: u32 = 0x00;
+                       // for i in 0..4{
+                       //     sum += note[i as usize] as u32;
+                       // }
+                       // sum = sum + 0x69 + 0x69 + 0x01 + ID as u32 + 4 as u32;
+                       // let mut check_sum:[u8; 4] = [0, 0, 0, 0];
+                       // for i in 0..4{
+                       //     check_sum[i] = (sum & 0xff) as u8;
+                       //     sum = sum >> 8;
+                       // }
+                       // let output = NewProtocol{
+                       //     start_num: [0x69, 0x69],
+                       //     function: 0x01,
+                       //     id: ID,
+                       //     data_len: 4,
+                       //     data: note,
+                       //     check_sum,
+                       // };
+                       // let serial: Vec<u8, 1024> = to_vec(&output).unwrap();
+                       // for i in 0..serial.len(){
+                       //     buf[i] = serial[i];
+                       // }
+                       // UART.modify(|uart| hprintln!("{}", uart.buffer.end));
+                       // UART.modify(|uart| hprintln!("len {}", uart.notes.len()));
+
+                       ///////
                        UART.modify(|uart| {
-                           hprintln!("{}", uart.buffer.end);
                            uart.put_bytes(&buf);
-                           // for i in 0..256{
-                           //     hprintln!("{}", uart.buffer[i]);
-                           // }
                            hprintln!("{}", uart.buffer.is_empty());
                            if !uart.tx_filled{
                                hprintln!("Nothing to send on TXD");

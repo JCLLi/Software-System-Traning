@@ -9,7 +9,7 @@ use cortex_m_semihosting::hprintln;
 /// The buffer should have a maximum capacity (since we don't have infinite memory), in practice a 256-byte capacity works fine.
 pub struct UartBuffer {
     buffer: [u8; 257],
-    start: usize,
+    pub start: usize,
     pub end: usize
 }
 

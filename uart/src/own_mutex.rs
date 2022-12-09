@@ -35,10 +35,10 @@ impl<T> OwnMutex<T> {
     /// this takes a reference to self, and a function that takes a mutable reference to the inner type.
     /// You need to make sure interrupts can't happen.
     pub fn modify<U>(&self, mut f: impl FnMut(&mut T) -> U) -> U {
-        // cortex_m::interrupt::disable();
-        // let r = f(unsafe {self.uart_driver.get().as_mut().unwrap()});
-        // unsafe {cortex_m::interrupt::enable();}
-        // r
-        free(|_| f(unsafe { self.uart_driver.get().as_mut() }.unwrap()))
+        cortex_m::interrupt::disable();
+        let r = f(unsafe {self.uart_driver.get().as_mut().unwrap()});
+        unsafe {cortex_m::interrupt::enable();}
+        r
+        //free(|_| f(unsafe { self.uart_driver.get().as_mut() }.unwrap()))
     }
 }

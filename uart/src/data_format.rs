@@ -31,9 +31,10 @@ pub enum Function{
 }
 
 impl NewProtocol{
-    pub fn new_to_uart(dest: &mut [u8], function: Function, note: [u8; 20], id: u8, data_len: u16) -> Result<usize, UartError> {
+    pub fn new_to_uart(dest: &mut [u8], function: Function, note: [u8; 20], id: u8, data_len: u16){
         match function {
             Function::ADD=> {
+
                 let mut sum: u32 = 0x00;
                 for i in 0..data_len{
                     sum += note[i as usize] as u32;
@@ -56,8 +57,6 @@ impl NewProtocol{
                 for i in 0..serial.len(){
                     dest[i] = serial[i];
                 }
-
-                Ok(serial.len())
             },
             Function::READ => {
                 let mut data: [u8; 20] = [0; 20];
@@ -80,7 +79,6 @@ impl NewProtocol{
                 for i in 0..serial.len(){
                     dest[i] = serial[i];
                 }
-                Ok(serial.len())
             },
             Function::DELETE => {
                 let mut data: [u8; 20] = [0; 20];
@@ -103,7 +101,6 @@ impl NewProtocol{
                 for i in 0..serial.len(){
                     dest[i] = serial[i];
                 }
-                Ok(serial.len())
             },
         }
 

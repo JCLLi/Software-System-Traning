@@ -1,3 +1,4 @@
+use alloc::collections::BTreeMap;
 use core::ops::Deref;
 use core::ptr::slice_from_raw_parts;
 use cortex_m::asm;
@@ -14,15 +15,18 @@ use heapless::Vec;
 /// is only one instance of this in the global `UART` variable (see `main.rs`).
 ///
 /// You will need to add fields to this.
-pub struct UartDriver {
+pub struct UartDriver<'a> {
     pub uart: nrf51_pac::UART0,
     pub buffer: UartBuffer,
     pub tx_filled: bool,
-    pub notes: Vec<[u8; 20], 20>,
+    //pub notes: Vec<Option<[u8; 20]>, 20>,
+    //pub notes: [[u8; 2]; 5],
     //pub notes: [Option<[u8; 20]>; 5],
+    pub notes: BTreeMap<u8, &'a str>,
+    pub id: u8,
 }
 
-impl UartDriver {
+impl <'a> UartDriver<'a> {
     /// Create a new instance `of the UART controller.
     ///
     /// This function can only be called once since UART0 only exists
@@ -34,17 +38,22 @@ impl UartDriver {
         // 3. Configure the UART interrupt
         // 5. Set the interrupt priority
         //let mut notes: [Option<[u8; 20]>; 5]  = [None; 5];
-        let mut notes: Vec<[u8; 20], 20> = Vec::new();
+        //let mut notes: Vec<Option<[u8; 20]>, 20> = Vec::new();
         // for i in 0..20 {
         //     notes.push(None);
         // }
-        let uart_driver = UartDriver{
+        let a = 0;
+        let mut notes = BTreeMap::new();
+        let mut uart_driver = UartDriver{
             uart,
             buffer: UartBuffer::new(),
             tx_filled: false,
             notes,
+            id: a,
         };
 
+        //hprintln!("start: {}", uart_driver.buffer.start);
+        //hprintln!("end: {}", uart_driver.buffer.end);
 
         uart_driver.uart.pselrts.reset();
         uart_driver.uart.pselrts.reset();
@@ -121,17 +130,23 @@ impl UartDriver {
 
     pub fn save_note(&mut self, note: [u8; 20]) -> Result<u8, ()>{
         //let position = self.notes.iter().position(|x: &Option<[u8; 20]>| x.is_none());
-        //let mut position= None;
-        // for i in 0..20{
+        // let mut position= 0;
+        // for i in 0..5{
         //     if self.notes[i].is_none(){
         //         //hprintln!("{}", i);
-        //         position = Some(i);
+        //         position = i;
         //         break;
         //     }
         // }
-        self.notes.push(note);
+
+        // let str = "aaaaa";
+        // self.notes.insert(self.id, str);
+
+        //self.id = self.id + 1;
+        hprintln!("id {}", self.id);
+        // self.notes.push(Some(*note));
         hprintln!("Successful");
-        Ok(0)
+        Ok(self.id)
         // match position {
         //     None => {
         //         return Err(());
@@ -177,8 +192,8 @@ impl UartDriver {
 /// Interrupt handler for UART0
 /// It's called when the enabled interrupts for uart0 are triggered
 unsafe fn UART0() {
-    cortex_m::interrupt::disable();
-    hprintln!("The interrupt occured");
+    //cortex_m::interrupt::disable();
+    //hprintln!("The interrupt occured");
 
     UART.modify(|uart| if uart.uart.events_rxdrdy.read().bits() != 0 {
         uart.uart.events_rxdrdy.reset();
