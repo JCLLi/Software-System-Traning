@@ -16,11 +16,6 @@ use crate::Function::{ADD, DELETE, READ};
 /// Later on, for the "interface" and "communication" requirements, you should
 /// modify the runner to work with your protocol and your interface.
 fn main() {
-    // let mut a:u32 = 0xffffffff;
-    // for i in 0..4 {
-    //     a = a >> (i * 2);
-    //     println!("{:#0x}", a);
-    // }
     let mut fault = false;
     let mut already_start = false;
     loop {
@@ -59,7 +54,7 @@ fn main() {
             println!("Please provide the command in the right format! Enter -h for help!");
             continue;
         }
-        let mut buf = [0; 1024];
+        let mut buf = [0; 29];
         match user_input.as_str() {
             "help\n" | "-h\n" => {
                 println!("
@@ -83,10 +78,6 @@ fn main() {
                 match commands[0] {
                     "-a" | "add" => {
                         NewProtocol::new_to_uart(&mut buf, ADD, String::from(commands[1]), 0);
-                        runner.write_all(&buf);
-                        // let input = loop{
-                        //     let r = runner.read(&mut buf).unwrap();
-                        // }
                     },
                     "-d" | "delete" => {
                         match commands[1].trim().parse::<u8>() {
@@ -116,6 +107,44 @@ fn main() {
                 }
             },
         }
+        runner.write_all(&buf);
+
+        let mut v = vec![];
+        'inner: loop{
+            let mut buf = [0; 29];
+            let r = runner.read(&mut buf).unwrap();
+            v.write_all(&buf[..r]).unwrap();
+
+            let mut input: Vec<u8, 1024> = Vec::new();
+            for i in 0..v.len(){
+                input.push(v[i]);
+            }
+            // for i in 0..input.len(){
+            //     print!("i: {:#0x} ", input[i]);
+            // }
+            match NewProtocol::new_from_uart(&input) {
+                Ok(res) => {
+                    let printout = String::from_utf8(res.data.to_vec()).unwrap();
+                    println!("NOTE ID: {}: {}", res.id, printout );
+                    break 'inner;
+                }
+                Err(err) => {
+                    // match err {
+                    //     UartError::MessageWrong => println!("Message wrong"),
+                    //     UartError::NotEnoughBytes => println!("NotEnoughBytes"),
+                    //     UartError::TooManyBytes => println!("TooManyBytes"),
+                    //     UartError::ChecksumWrong => println!("ChecksumWrong"),
+                    // }
+                    ()
+                }
+            }
+            // if let Ok(res) = {
+            //     let printout = String::from_utf8(res.data.to_vec()).unwrap();
+            //     println!("NOTE ID: {}: {}", res.id, printout );
+            //     break 'inner;
+            // }
+        };
+
 
         // let mut input: Vec<u8, 1024> = heapless::Vec::new();
         // for i in 0..1024{
@@ -191,6 +220,8 @@ fn main() {
 pub enum UartError {
     NotEnoughBytes,
     TooManyBytes,
+    MessageWrong,
+    ChecksumWrong,
 }
 
 /// This is an example protocol we already made for you. It's very simple. However,
@@ -200,12 +231,12 @@ pub enum UartError {
 /// which automates complicated deserializing from and to bytes.
 /// 
 #[derive(Serialize, Deserialize, Debug, Eq, PartialEq)]
-pub struct NewProtocol<'a> {
+pub struct NewProtocol {
     start_num: [u8; 2],
     function: u8,
     id: u8,
     data_len: u16,
-    data: &'a str,
+    data: [u8; 20],
     check_sum: [u8; 4],
 }
 
@@ -216,33 +247,35 @@ pub enum Function{
     DELETE,
 }
 
-impl<'a> NewProtocol<'a> {
+impl NewProtocol {
     pub fn new_to_uart(dest: &mut [u8], function: Function, note: String, id: u8) -> Result<usize, UartError> {
         match function {
             Function::ADD=> {
                 let note_str = note.as_str();
                 let note_byte = note_str.as_bytes();
-
-                if note_byte.len() > 1014 {
+                if note_byte.len() > 20 {
                     return Err(UartError::TooManyBytes);
                 }
-
+                let mut data: [u8; 20] = [0; 20];
+                for i in 0..note_byte.len(){
+                    data[i] = note_byte[i];
+                }
                 let mut sum: u32 = 0x00;
                 for i in 0..note_byte.len(){
                     sum += note_byte[i as usize] as u32;
                 }
-                sum = sum + 0x69 + 0x69 + 0x01 + id as u32 + note.len() as u32;
+                sum = sum + 0x69 + 0x69 + 0x01 + id as u32 + note_byte.len() as u32;
                 let mut check_sum:[u8; 4] = [0, 0, 0, 0];
                 for i in 0..4{
-                    sum = sum >> i * 4;
                     check_sum[i] = (sum & 0xff) as u8;
+                    sum = sum >> 8;
                 }
                 let output = NewProtocol{
                     start_num: [0x69, 0x69],
                     function: 0x01,
                     id,
-                    data_len: note_str.len() as u16,
-                    data: note_str,
+                    data_len: note_byte.len() as u16,
+                    data,
                     check_sum,
                 };
                 let serial: Vec<u8, 1024> = to_vec(&output).unwrap();
@@ -253,20 +286,19 @@ impl<'a> NewProtocol<'a> {
                 Ok(serial.len())
             },
             Function::READ => {
+                let mut data: [u8; 20] = [0; 20];
                 let mut sum = 0x69 + 0x69 + 0x02 + id as u32;
                 let mut check_sum:[u8; 4] = [0, 0, 0, 0];
                 for i in 0..4{
-                    sum = sum >> i * 4;
                     check_sum[i] = (sum & 0xff) as u8;
-
-                    println!("{:#0x}", check_sum[i]);
+                    sum = sum >> 8;
                 }
                 let output = NewProtocol{
                     start_num: [0x69, 0x69],
                     function: 0x02,
                     id,
                     data_len: 0,
-                    data: "",
+                    data,
                     check_sum,
                 };
                 let serial: Vec<u8, 1024> = to_vec(&output).unwrap();
@@ -276,12 +308,13 @@ impl<'a> NewProtocol<'a> {
                 Ok(serial.len())
             },
             Function::DELETE => {
+                let mut data: [u8; 20] = [0; 20];
                 let mut sum = 0x69 + 0x69 + 0x03 + id as u32;
                 let mut check_sum:[u8; 4] = [0, 0, 0, 0];
                 for i in 0..4{
-                    sum = sum >> i * 4;
-                    check_sum[i] = (sum & 0xff) as u8;
 
+                    check_sum[i] = (sum & 0xff) as u8;
+                    sum = sum >> 8;
                     println!("{:#0x}", check_sum[i]);
                 }
                 let output = NewProtocol{
@@ -289,7 +322,7 @@ impl<'a> NewProtocol<'a> {
                     function: 0x03,
                     id,
                     data_len: 0,
-                    data: "",
+                    data,
                     check_sum,
                 };
                 let serial: Vec<u8, 1024> = to_vec(&output).unwrap();
@@ -302,14 +335,34 @@ impl<'a> NewProtocol<'a> {
 
     }
 
-    // pub fn new_from_uart(src: &mut [u8]) -> Result<(Self, usize), UartError> {
-    //     let mut input: Vec<u8, 1024> = heapless::Vec::new();
-    //     for i in 0..1024{
-    //         input.push(src[i]);
-    //     }
-    //     let input_data: NewProtocol = from_bytes(input.deref()).unwrap();
-    //     Ok((input_data, 1))
-    // }
+    pub fn new_from_uart(input: &Vec<u8, 1024>) -> Result<NewProtocol, UartError>{
+        if input.len() < 29 { return Err(UartError::NotEnoughBytes); }
+        let input_data: NewProtocol = from_bytes(input.deref()).unwrap();
+        // println!("Header: {:#0x}{:#0x}", input_data.start_num[0], input_data.start_num[1]);
+        // println!("Function: {:#0x}", input_data.function);
+        // println!("ID: {:#0x}", input_data.id);
+        // let printout = String::from_utf8(input_data.data.to_vec()).unwrap();
+        // println!("Data: {}", printout);
+        // println!("Length: {:#0x}", input_data.data_len);
+        if input_data.start_num[0] != 0x69 || input_data.start_num[1] != 0x69{ return Err(UartError::MessageWrong); }
+
+        let mut sum: u32 = 0;
+        for i in 0..input_data.data_len{
+            sum = sum + input_data.data[i as usize] as u32;
+        }
+        sum = sum + input_data.start_num[0] as u32 + input_data.start_num[1] as u32 + input_data.function as u32 + input_data.id as u32
+            + input_data.data_len as u32;
+        //println!("sum :{:#0x}", sum);
+        let mut sum_check: [u8; 4] = [0, 0, 0, 0];
+        for i in 0..4{
+            sum_check[i] = (sum & 0xff) as u8;
+            sum = sum >> 8;
+            // println!("\n");
+            // print!("checksum: {:#0x}, sumcheck{:#0x}; " , input_data.check_sum[i], sum_check[i]);
+        }
+        if sum_check != input_data.check_sum{ return Err(UartError::ChecksumWrong); }
+        Ok(input_data)
+    }
 }
 
 
@@ -378,4 +431,46 @@ impl ExampleProtocol {
             _ => Err(UartError::NotEnoughBytes),
         }
     }
+}
+
+
+#[test]
+fn test_print() {
+    let b = "0".as_bytes();
+    let mut data: [u8; 20] = [0; 20];
+    for i in 0..b.len(){
+        data[i] = b[i];
+    }
+    let mut sum: u32 = 0x00;
+    for i in 0..data.len(){
+        sum += data[i as usize] as u32;
+    }
+    sum = sum + 0x69 + 0x69 + 0x01 + 0x0b;
+    let mut check_sum:[u8; 4] = [0, 0, 0, 0];
+    for i in 0..4{
+        sum = sum >> i * 4;
+        check_sum[i] = (sum & 0xff) as u8;
+    }
+    let a = NewProtocol{
+        start_num: [0x69, 0x69],
+        function: 0x01,
+        id: 0x00,
+        data_len: 11,
+        data,
+        check_sum,
+    };
+
+    let c: Vec<u8, 1024> = to_vec(&a).unwrap();
+
+    //match  NewProtocol::new_from_uart(&c){
+        //Ok(res) =>{
+            let res = NewProtocol::new_from_uart(&c).unwrap();
+            let printout = String::from_utf8(res.data.to_vec()).unwrap();
+            println!("NOTE ID: {}: {}", res.id, printout );
+        // }
+        // Err(err) =>{
+        //     println!("aaa");
+        // }
+
+    //}
 }

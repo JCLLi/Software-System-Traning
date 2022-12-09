@@ -1,3 +1,5 @@
+use cortex_m_semihosting::hprintln;
+
 /// The UART driver can only send one byte at a time, but a print may produce more than one byte.
 /// The bytes that cannot yet be sent must be buffered. This struct is responsible for that.
 ///
@@ -8,7 +10,7 @@
 pub struct UartBuffer {
     buffer: [u8; 257],
     start: usize,
-    end: usize
+    pub end: usize
 }
 
 /// These are the errors that can happen during the operation of the buffer. You may add some as necessary.
@@ -30,6 +32,8 @@ impl UartBuffer {
         if self.is_empty() {
             return Err(UartBufferError::Empty_Buffer);
         }
+        //self.start = (self.start + 1) % 256;
+        //hprintln!("{}", self.start);
         let value = self.buffer.get(self.start).unwrap().clone();
         self.tick_start();
         Ok(value)

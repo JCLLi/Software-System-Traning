@@ -8,6 +8,7 @@ use nrf51_pac::uart0;
 use nrf51_pac::uart0::{baudrate, enable, intenclr, intenset, tasks_startrx, tasks_starttx, txd};
 use crate::buffer::UartBuffer;
 use cortex_m_semihosting::hprintln;
+use heapless::Vec;
 
 /// This struct holds all the global state of the uart driver. Generally, there
 /// is only one instance of this in the global `UART` variable (see `main.rs`).
@@ -17,10 +18,12 @@ pub struct UartDriver {
     pub uart: nrf51_pac::UART0,
     pub buffer: UartBuffer,
     pub tx_filled: bool,
+    pub notes: Vec<[u8; 20], 20>,
+    //pub notes: [Option<[u8; 20]>; 5],
 }
 
 impl UartDriver {
-    /// Create a new instance of the UART controller.
+    /// Create a new instance `of the UART controller.
     ///
     /// This function can only be called once since UART0 only exists
     /// once and is moved into the driver here.
@@ -30,11 +33,16 @@ impl UartDriver {
         // 2. Configure the UART peripheral
         // 3. Configure the UART interrupt
         // 5. Set the interrupt priority
-
+        //let mut notes: [Option<[u8; 20]>; 5]  = [None; 5];
+        let mut notes: Vec<[u8; 20], 20> = Vec::new();
+        // for i in 0..20 {
+        //     notes.push(None);
+        // }
         let uart_driver = UartDriver{
             uart,
             buffer: UartBuffer::new(),
             tx_filled: false,
+            notes,
         };
 
 
@@ -110,6 +118,59 @@ impl UartDriver {
         }
         i
     }
+
+    pub fn save_note(&mut self, note: [u8; 20]) -> Result<u8, ()>{
+        //let position = self.notes.iter().position(|x: &Option<[u8; 20]>| x.is_none());
+        //let mut position= None;
+        // for i in 0..20{
+        //     if self.notes[i].is_none(){
+        //         //hprintln!("{}", i);
+        //         position = Some(i);
+        //         break;
+        //     }
+        // }
+        self.notes.push(note);
+        hprintln!("Successful");
+        Ok(0)
+        // match position {
+        //     None => {
+        //         return Err(());
+        //     }
+        //     Some(ID) => {
+        //          //self.notes.insert(ID, Some(note));
+        //         self.notes[ID] = note;
+        //         hprintln!("{}", ID);
+        //         hprintln!("Successful");
+        //         return Ok(ID as u8);
+        //     }
+        // };
+    }
+
+    // pub fn delete_note(&mut self, ID: u8) -> [u8; 20]{
+    //     self.notes[ID as usize] = None;
+    //     let done = "done".as_bytes();
+    //     let mut output: [u8; 20] = [0; 20];
+    //     for i in 0..done.len(){
+    //         output[i] = done[i];
+    //     }
+    //     output
+    // }
+    //
+    // pub fn read_note(&mut self, ID: u8) -> [u8; 20]{
+    //     let mut output = [0; 20];
+    //     if self.notes[ID as usize].is_none(){
+    //         let error = "This note doesn't exist".as_bytes();
+    //         for i in 0..20{
+    //             output[i] = error[i];
+    //         }
+    //         return output;
+    //     }else {
+    //         for i in 0..20{
+    //             output[i] = (self.notes[ID as usize].unwrap())[i];
+    //         }
+    //         return output;
+    //     }
+    // }
 }
 
 #[interrupt]
@@ -124,20 +185,21 @@ unsafe fn UART0() {
         let byte = uart.uart.rxd.read().bits() as u8;
         if !uart.buffer.is_full() {
             uart.buffer.write_byte(byte).unwrap();
-            hprintln!("Now reading {} from RXD into ringbuffer", byte as char);
+            //hprintln!("Now reading {} from RXD into ringbuffer", byte as char);
         }else {
             uart.buffer.overwrite(byte);
-            hprintln!("Now reading {} from RXD and OVERwriting into ringbuffer", byte as char);
+            //hprintln!("Now reading {} from RXD and OVERwriting into ringbuffer", byte as char);
         }
     });
 
     UART.modify(|uart| if uart.uart.events_txdrdy.read().bits() != 0 {
+        //hprintln!("tx");
         uart.uart.events_txdrdy.reset();
         if !uart.buffer.is_empty() {
             let byte = uart.buffer.read_byte().unwrap();
             unsafe {uart.uart.txd.write(|w: &mut txd::W| w.txd().bits(byte));}
             uart.tx_filled = true;
-            hprintln!("Now sending {} from ringbuffer via TXD", byte as char);
+            //hprintln!("Now sending {} from ringbuffer via TXD", byte as char);
         }else {
             uart.tx_filled = false;
         }
