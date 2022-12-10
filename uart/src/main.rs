@@ -68,7 +68,7 @@ fn main() -> ! {
     // then infinitely listen for messages. Read them into buf, deserialize them, create
     // a response, serialize the response and write it back to the UART.
     let mut buf = [0u8; 64];
-    let mut input: Vec<u8, 1024> = Vec::new();
+    let mut input: Vec<u8, 29> = Vec::new();
     loop {
             //hprintln!("here1");
             let r = UART.modify(|uart| uart.get_bytes(&mut buf));
@@ -113,7 +113,7 @@ fn main() -> ! {
                        //     data: note,
                        //     check_sum,
                        // };
-                       // let serial: Vec<u8, 1024> = to_vec(&output).unwrap();
+                       // let serial: Vec<u8, 29> = to_vec(&output).unwrap();
                        // for i in 0..serial.len(){
                        //     buf[i] = serial[i];
                        // }

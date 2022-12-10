@@ -53,7 +53,7 @@ impl NewProtocol{
                     data: note,
                     check_sum,
                 };
-                let serial: Vec<u8, 1024> = to_vec(&output).unwrap();
+                let serial: Vec<u8, 29> = to_vec(&output).unwrap();
                 for i in 0..serial.len(){
                     dest[i] = serial[i];
                 }
@@ -75,7 +75,7 @@ impl NewProtocol{
                     data,
                     check_sum,
                 };
-                let serial: Vec<u8, 1024> = to_vec(&output).unwrap();
+                let serial: Vec<u8, 29> = to_vec(&output).unwrap();
                 for i in 0..serial.len(){
                     dest[i] = serial[i];
                 }
@@ -97,7 +97,7 @@ impl NewProtocol{
                     data,
                     check_sum,
                 };
-                let serial: Vec<u8, 1024> = to_vec(&output).unwrap();
+                let serial: Vec<u8, 29> = to_vec(&output).unwrap();
                 for i in 0..serial.len(){
                     dest[i] = serial[i];
                 }
@@ -105,7 +105,7 @@ impl NewProtocol{
         }
 
     }
-    pub fn new_from_uart(input: &Vec<u8, 1024>) -> Result<NewProtocol, UartError>{
+    pub fn new_from_uart(input: &Vec<u8, 29>) -> Result<NewProtocol, UartError>{
         if input.len() < 29 { return Err(UartError::NotEnoughBytes); }
         let input_data: NewProtocol = from_bytes(input.deref()).unwrap();
         if input_data.start_num[0] != 0x69 || input_data.start_num[1] != 0x69{ return Err(UartError::MessageWrong); }

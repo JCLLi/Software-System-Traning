@@ -18,6 +18,14 @@ use crate::Function::{ADD, DELETE, READ};
 fn main() {
     let mut fault = false;
     let mut already_start = false;
+    // The code below basically starts the qemu
+    let binary = args().nth(1).unwrap();
+    // println!("{} is inside the binary", binary);
+    let mut runner = runner::Runner::new(&binary).unwrap();
+    if runner.testing {
+        runner.wait_for_tests();
+        return;
+    }
     loop {
         if already_start == false {
             println!("
@@ -34,14 +42,7 @@ fn main() {
         }
         fault = false;
 
-        // The code below basically starts the qemu
-        let binary = args().nth(1).unwrap();
-        // println!("{} is inside the binary", binary);
-        let mut runner = runner::Runner::new(&binary).unwrap();
-        if runner.testing {
-            runner.wait_for_tests();
-            return;
-        }
+
 
         // Get the things user iput from terminal -> user_input
         let mut user_input = String::new();
@@ -115,7 +116,7 @@ fn main() {
             let r = runner.read(&mut buf).unwrap();
             v.write_all(&buf[..r]).unwrap();
 
-            let mut input: Vec<u8, 1024> = Vec::new();
+            let mut input: Vec<u8, 29> = Vec::new();
             for i in 0..v.len(){
                 input.push(v[i]);
             }
@@ -146,8 +147,8 @@ fn main() {
         };
 
 
-        // let mut input: Vec<u8, 1024> = heapless::Vec::new();
-        // for i in 0..1024{
+        // let mut input: Vec<u8, 29> = heapless::Vec::new();
+        // for i in 0..29{
         //     input.push(buf[i]);
         // }
         // let a: NewProtocol = from_bytes(input.deref()).unwrap();
@@ -172,7 +173,7 @@ fn main() {
         // };
         // let to_send: NewProtocolCmd;
         // let to_receive: NewProtocolCmd;
-        // let mut buf = [0; 1024];
+        // let mut buf = [0; 29];
         // to_send.new_to_uart(&mut buf, &my_message);
         //
         // let to_send = [
@@ -186,7 +187,7 @@ fn main() {
         // let mut v = vec![];
         // for (s, r) in to_send.into_iter().zip(to_receive) {
         //     println!("Now Writing: {:?}", s);
-        //     let mut buf = [0; 1024];
+        //     let mut buf = [0; 29];
         //     let size = s.to_uart(&mut buf).unwrap();
         //     runner.write_all(&buf[..size]).unwrap();
         //     let w = loop {
@@ -278,7 +279,7 @@ impl NewProtocol {
                     data,
                     check_sum,
                 };
-                let serial: Vec<u8, 1024> = to_vec(&output).unwrap();
+                let serial: Vec<u8, 29> = to_vec(&output).unwrap();
                 for i in 0..serial.len(){
                     dest[i] = serial[i];
                 }
@@ -301,7 +302,7 @@ impl NewProtocol {
                     data,
                     check_sum,
                 };
-                let serial: Vec<u8, 1024> = to_vec(&output).unwrap();
+                let serial: Vec<u8, 29> = to_vec(&output).unwrap();
                 for i in 0..serial.len(){
                     dest[i] = serial[i];
                 }
@@ -325,7 +326,7 @@ impl NewProtocol {
                     data,
                     check_sum,
                 };
-                let serial: Vec<u8, 1024> = to_vec(&output).unwrap();
+                let serial: Vec<u8, 29> = to_vec(&output).unwrap();
                 for i in 0..serial.len(){
                     dest[i] = serial[i];
                 }
@@ -335,7 +336,7 @@ impl NewProtocol {
 
     }
 
-    pub fn new_from_uart(input: &Vec<u8, 1024>) -> Result<NewProtocol, UartError>{
+    pub fn new_from_uart(input: &Vec<u8, 29>) -> Result<NewProtocol, UartError>{
         if input.len() < 29 { return Err(UartError::NotEnoughBytes); }
         let input_data: NewProtocol = from_bytes(input.deref()).unwrap();
         // println!("Header: {:#0x}{:#0x}", input_data.start_num[0], input_data.start_num[1]);
@@ -460,7 +461,7 @@ fn test_print() {
         check_sum,
     };
 
-    let c: Vec<u8, 1024> = to_vec(&a).unwrap();
+    let c: Vec<u8, 29> = to_vec(&a).unwrap();
 
     //match  NewProtocol::new_from_uart(&c){
         //Ok(res) =>{

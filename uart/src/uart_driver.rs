@@ -142,7 +142,7 @@ impl <'a> UartDriver<'a> {
         // let str = "aaaaa";
         // self.notes.insert(self.id, str);
 
-        //self.id = self.id + 1;
+        self.id = self.id + 1;
         hprintln!("id {}", self.id);
         // self.notes.push(Some(*note));
         hprintln!("Successful");
