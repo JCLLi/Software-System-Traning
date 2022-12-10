@@ -120,92 +120,29 @@ fn main() {
             for i in 0..v.len(){
                 input.push(v[i]);
             }
-            // for i in 0..input.len(){
-            //     print!("i: {:#0x} ", input[i]);
-            // }
+
             match NewProtocol::new_from_uart(&input) {
                 Ok(res) => {
+
                     let printout = String::from_utf8(res.data.to_vec()).unwrap();
                     println!("NOTE ID: {}: {}", res.id, printout );
                     break 'inner;
                 }
                 Err(err) => {
-                    // match err {
-                    //     UartError::MessageWrong => println!("Message wrong"),
-                    //     UartError::NotEnoughBytes => println!("NotEnoughBytes"),
-                    //     UartError::TooManyBytes => println!("TooManyBytes"),
-                    //     UartError::ChecksumWrong => println!("ChecksumWrong"),
-                    // }
-                    ()
+                    if input.len() == 29{
+                        match err {
+                            UartError::MessageWrong => println!("Message wrong"),
+                            UartError::NotEnoughBytes => println!("NotEnoughBytes"),
+                            UartError::TooManyBytes => println!("TooManyBytes"),
+                            UartError::ChecksumWrong => println!("ChecksumWrong"),
+                        }
+
+                        println!("Please check your command!!!");
+                        break 'inner;
+                    }
                 }
             }
-            // if let Ok(res) = {
-            //     let printout = String::from_utf8(res.data.to_vec()).unwrap();
-            //     println!("NOTE ID: {}: {}", res.id, printout );
-            //     break 'inner;
-            // }
         };
-
-
-        // let mut input: Vec<u8, 29> = heapless::Vec::new();
-        // for i in 0..29{
-        //     input.push(buf[i]);
-        // }
-        // let a: NewProtocol = from_bytes(input.deref()).unwrap();
-        // println!("{:#0x}", a.start_num[0]);
-        // println!("{:#0x}", a.start_num[1]);
-        // println!("{:#0x}", a.function);
-        // println!("{:#0x}", a.id);
-        // println!("{:#0x}", a.data_len);
-        // println!("{}", a.data);
-        // println!("{:#0x}", a.check_sum[0]);
-        // println!("{:#0x}", a.check_sum[1]);
-        // println!("{:#0x}", a.check_sum[2]);
-        // println!("{:#0x}", a.check_sum[3]);
-
-        // let my_message = NewProtocol {
-        //     start_num: 0x6969,
-        //     function: 0x01,
-        //     id: 0x01,
-        //     data_len: 0x05,
-        //     data: "FUCKU",
-        //     check_sum: 0x01,
-        // };
-        // let to_send: NewProtocolCmd;
-        // let to_receive: NewProtocolCmd;
-        // let mut buf = [0; 29];
-        // to_send.new_to_uart(&mut buf, &my_message);
-        //
-        // let to_send = [
-        //     ExampleProtocol::Number(1),
-        //     ExampleProtocol::Text("Hello".to_string()),
-        // ];
-        // let to_receive = [
-        //     ExampleProtocol::Number(2),
-        //     ExampleProtocol::Text("World".to_string()),
-        // ];
-        // let mut v = vec![];
-        // for (s, r) in to_send.into_iter().zip(to_receive) {
-        //     println!("Now Writing: {:?}", s);
-        //     let mut buf = [0; 29];
-        //     let size = s.to_uart(&mut buf).unwrap();
-        //     runner.write_all(&buf[..size]).unwrap();
-        //     let w = loop {
-        //         let mut buf = [0; 255];
-        //         let r = runner.read(&mut buf).unwrap();
-        //         v.write_all(&buf[..r]).unwrap();
-        //         let res = ExampleProtocol::from_uart(&v);
-        //         if let Ok((res, read)) = res {
-        //             v = v.into_iter().skip(read).collect();
-        //             break res;
-        //         }
-        //     };
-        //     if w != r {
-        //         println!("Input {:?} failed: got {:?}, expected {:?}", s, w, r);
-        //     } else {
-        //         println!("Input {:?} succeeded", s);
-        //     }
-        // }
     }
     println!("
                 ---------------------------------------------------------------------\n
@@ -236,7 +173,7 @@ pub struct NewProtocol {
     start_num: [u8; 2],
     function: u8,
     id: u8,
-    data_len: u16,
+    data_len: u8,
     data: [u8; 20],
     check_sum: [u8; 4],
 }
@@ -275,7 +212,7 @@ impl NewProtocol {
                     start_num: [0x69, 0x69],
                     function: 0x01,
                     id,
-                    data_len: note_byte.len() as u16,
+                    data_len: note_byte.len() as u8,
                     data,
                     check_sum,
                 };
@@ -313,10 +250,8 @@ impl NewProtocol {
                 let mut sum = 0x69 + 0x69 + 0x03 + id as u32;
                 let mut check_sum:[u8; 4] = [0, 0, 0, 0];
                 for i in 0..4{
-
                     check_sum[i] = (sum & 0xff) as u8;
                     sum = sum >> 8;
-                    println!("{:#0x}", check_sum[i]);
                 }
                 let output = NewProtocol{
                     start_num: [0x69, 0x69],
@@ -339,12 +274,6 @@ impl NewProtocol {
     pub fn new_from_uart(input: &Vec<u8, 29>) -> Result<NewProtocol, UartError>{
         if input.len() < 29 { return Err(UartError::NotEnoughBytes); }
         let input_data: NewProtocol = from_bytes(input.deref()).unwrap();
-        // println!("Header: {:#0x}{:#0x}", input_data.start_num[0], input_data.start_num[1]);
-        // println!("Function: {:#0x}", input_data.function);
-        // println!("ID: {:#0x}", input_data.id);
-        // let printout = String::from_utf8(input_data.data.to_vec()).unwrap();
-        // println!("Data: {}", printout);
-        // println!("Length: {:#0x}", input_data.data_len);
         if input_data.start_num[0] != 0x69 || input_data.start_num[1] != 0x69{ return Err(UartError::MessageWrong); }
 
         let mut sum: u32 = 0;
@@ -353,13 +282,10 @@ impl NewProtocol {
         }
         sum = sum + input_data.start_num[0] as u32 + input_data.start_num[1] as u32 + input_data.function as u32 + input_data.id as u32
             + input_data.data_len as u32;
-        //println!("sum :{:#0x}", sum);
         let mut sum_check: [u8; 4] = [0, 0, 0, 0];
         for i in 0..4{
             sum_check[i] = (sum & 0xff) as u8;
             sum = sum >> 8;
-            // println!("\n");
-            // print!("checksum: {:#0x}, sumcheck{:#0x}; " , input_data.check_sum[i], sum_check[i]);
         }
         if sum_check != input_data.check_sum{ return Err(UartError::ChecksumWrong); }
         Ok(input_data)

@@ -2,6 +2,7 @@
 //! want to factor this out into its own crate to share this between the two libraries.
 use alloc::string::String;
 use core::ops::Deref;
+use cortex_m_semihosting::hprintln;
 
 use serde::{Serialize, Deserialize};
 use postcard::{from_bytes, to_vec};
@@ -19,7 +20,7 @@ pub struct NewProtocol {
     pub start_num: [u8; 2],
     pub function: u8,
     pub id: u8,
-    pub data_len: u16,
+    pub data_len: u8,
     pub data: [u8; 20],
     pub check_sum: [u8; 4],
 }
@@ -31,7 +32,7 @@ pub enum Function{
 }
 
 impl NewProtocol{
-    pub fn new_to_uart(dest: &mut [u8], function: Function, note: [u8; 20], id: u8, data_len: u16){
+    pub fn new_to_uart(dest: &mut [u8], function: Function, note: [u8; 20], id: u8, data_len: u8){
         match function {
             Function::ADD=> {
 
@@ -59,11 +60,12 @@ impl NewProtocol{
                 }
             },
             Function::READ => {
-                let mut data: [u8; 20] = [0; 20];
-                let mut sum = 0x69 + 0x69 + 0x02 + id as u32;
+                let mut sum = 0x69 + 0x69 + 0x02 + id as u32 + data_len as u32;
+                for i in 0..20{
+                    sum += note[i] as u32;
+                }
                 let mut check_sum:[u8; 4] = [0, 0, 0, 0];
                 for i in 0..4{
-
                     check_sum[i] = (sum & 0xff) as u8;
                     sum = sum >> 8;
                 }
@@ -71,8 +73,8 @@ impl NewProtocol{
                     start_num: [0x69, 0x69],
                     function: 0x02,
                     id,
-                    data_len: 0,
-                    data,
+                    data_len,
+                    data: note,
                     check_sum,
                 };
                 let serial: Vec<u8, 29> = to_vec(&output).unwrap();
@@ -81,11 +83,12 @@ impl NewProtocol{
                 }
             },
             Function::DELETE => {
-                let mut data: [u8; 20] = [0; 20];
-                let mut sum = 0x69 + 0x69 + 0x03 + id as u32;
+                let mut sum = 0x69 + 0x69 + 0x03 + id as u32 + data_len as u32;
+                for i in 0..20{
+                    sum += note[i] as u32;
+                }
                 let mut check_sum:[u8; 4] = [0, 0, 0, 0];
                 for i in 0..4{
-
                     check_sum[i] = (sum & 0xff) as u8;
                     sum = sum >> 8;
                 }
@@ -93,8 +96,8 @@ impl NewProtocol{
                     start_num: [0x69, 0x69],
                     function: 0x03,
                     id,
-                    data_len: 0,
-                    data,
+                    data_len,
+                    data: note,
                     check_sum,
                 };
                 let serial: Vec<u8, 29> = to_vec(&output).unwrap();

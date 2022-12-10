@@ -15,18 +15,16 @@ use heapless::Vec;
 /// is only one instance of this in the global `UART` variable (see `main.rs`).
 ///
 /// You will need to add fields to this.
-pub struct UartDriver<'a> {
+pub struct UartDriver {
     pub uart: nrf51_pac::UART0,
     pub buffer: UartBuffer,
     pub tx_filled: bool,
-    //pub notes: Vec<Option<[u8; 20]>, 20>,
+    pub notes: Vec<Option<(u8, [u8; 20])>, 20>,
     //pub notes: [[u8; 2]; 5],
     //pub notes: [Option<[u8; 20]>; 5],
-    pub notes: BTreeMap<u8, &'a str>,
-    pub id: u8,
 }
 
-impl <'a> UartDriver<'a> {
+impl UartDriver {
     /// Create a new instance `of the UART controller.
     ///
     /// This function can only be called once since UART0 only exists
@@ -37,19 +35,15 @@ impl <'a> UartDriver<'a> {
         // 2. Configure the UART peripheral
         // 3. Configure the UART interrupt
         // 5. Set the interrupt priority
-        //let mut notes: [Option<[u8; 20]>; 5]  = [None; 5];
-        //let mut notes: Vec<Option<[u8; 20]>, 20> = Vec::new();
-        // for i in 0..20 {
-        //     notes.push(None);
-        // }
-        let a = 0;
-        let mut notes = BTreeMap::new();
+        let mut notes: Vec<Option<(u8, [u8; 20])>, 20> = Vec::new();
+        for i in 0..20 {
+            notes.push(None);
+        }
         let mut uart_driver = UartDriver{
             uart,
             buffer: UartBuffer::new(),
             tx_filled: false,
             notes,
-            id: a,
         };
 
         //hprintln!("start: {}", uart_driver.buffer.start);
@@ -128,64 +122,71 @@ impl <'a> UartDriver<'a> {
         i
     }
 
-    pub fn save_note(&mut self, note: [u8; 20]) -> Result<u8, ()>{
-        //let position = self.notes.iter().position(|x: &Option<[u8; 20]>| x.is_none());
-        // let mut position= 0;
-        // for i in 0..5{
-        //     if self.notes[i].is_none(){
-        //         //hprintln!("{}", i);
-        //         position = i;
-        //         break;
-        //     }
-        // }
+    pub fn save_note(&mut self, note: [u8; 20], len: u8) -> Result<u8, ()>{
+        let position = self.notes.iter().position(|x: &Option<(u8, [u8; 20])>| x.is_none());
 
-        // let str = "aaaaa";
-        // self.notes.insert(self.id, str);
-
-        self.id = self.id + 1;
-        hprintln!("id {}", self.id);
-        // self.notes.push(Some(*note));
-        hprintln!("Successful");
-        Ok(self.id)
-        // match position {
-        //     None => {
-        //         return Err(());
-        //     }
-        //     Some(ID) => {
-        //          //self.notes.insert(ID, Some(note));
-        //         self.notes[ID] = note;
-        //         hprintln!("{}", ID);
-        //         hprintln!("Successful");
-        //         return Ok(ID as u8);
-        //     }
-        // };
+        match position {
+            None => {
+                return Err(());
+            }
+            Some(ID) => {
+                 //self.notes.insert(ID, Some(note));
+                self.notes[ID] = Some((len, note));
+                return Ok(ID as u8);
+            }
+        };
     }
 
-    // pub fn delete_note(&mut self, ID: u8) -> [u8; 20]{
-    //     self.notes[ID as usize] = None;
-    //     let done = "done".as_bytes();
-    //     let mut output: [u8; 20] = [0; 20];
-    //     for i in 0..done.len(){
-    //         output[i] = done[i];
-    //     }
-    //     output
-    // }
-    //
-    // pub fn read_note(&mut self, ID: u8) -> [u8; 20]{
-    //     let mut output = [0; 20];
-    //     if self.notes[ID as usize].is_none(){
-    //         let error = "This note doesn't exist".as_bytes();
-    //         for i in 0..20{
-    //             output[i] = error[i];
-    //         }
-    //         return output;
-    //     }else {
-    //         for i in 0..20{
-    //             output[i] = (self.notes[ID as usize].unwrap())[i];
-    //         }
-    //         return output;
-    //     }
-    // }
+    pub fn delete_note(&mut self, ID: u8) -> (u8, [u8; 20]){
+        let mut output: [u8; 20] = [0; 20];
+        if ID > 19 {
+            let error = "Out of scope".as_bytes();
+            for i in 0..error.len() {
+                output[i] = error[i];
+            }
+            return (error.len() as u8, output);
+        }
+        if self.notes[ID as usize] == None{
+            let error = "No related note ".as_bytes();
+            for i in 0..error.len(){
+                output[i] = error[i];
+            }
+            return (error.len() as u8, output)
+        }
+        else {
+            self.notes[ID as usize] = None;
+            let delete = "Deleted".as_bytes();
+            for i in 0..delete.len(){
+                output[i] = delete[i];
+            }
+            return (delete.len() as u8, output);
+        }
+
+
+    }
+
+    pub fn read_note(&mut self, ID: u8) -> (u8, [u8; 20]) {
+        let mut output = [0; 20];
+        if ID > 19{
+            let error = "Out of scope".as_bytes();
+            for i in 0..error.len() {
+                output[i] = error[i];
+            }
+            return (error.len() as u8, output);
+        }
+        if let Some((len, note)) = self.notes[ID as usize]{
+            for i in 0..20 {
+                output[i] = note[i];
+            }
+            return (len, output);
+        } else {
+            let error = "Doesn't exist".as_bytes();
+            for i in 0..error.len() {
+                output[i] = error[i];
+            }
+            return (error.len() as u8, output);
+        }
+    }
 }
 
 #[interrupt]
