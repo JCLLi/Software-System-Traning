@@ -163,7 +163,7 @@ impl UartDriver {
         }
         else {
             self.notes[ID as usize] = None;
-            let delete = "No related note".as_bytes();
+            let delete = "Deleted".as_bytes();
             for i in 0..delete.len(){
                 output[i] = delete[i];
             }

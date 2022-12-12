@@ -139,7 +139,6 @@ fn main() {
 
                 match NewProtocol::new_from_uart(&input) {
                     Ok(res) => {
-
                         let printout = String::from_utf8(res.data.to_vec()).unwrap();
                         println!("///////NOTE ID IS: {} ..........{}///////", res.id, printout );
                         break 'inner;
