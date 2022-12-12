@@ -26,8 +26,6 @@ use once_cell::OnceCell;
 use own_mutex::OwnMutex;
 use uart_driver::UartDriver;
 
-use data_format::ExampleProtocol;
-
 use cortex_m_rt::entry;
 use cortex_m_semihosting::{hprint, hprintln};
 
@@ -69,6 +67,7 @@ fn main() -> ! {
     // a response, serialize the response and write it back to the UART.
     let mut buf = [0u8; 64];
     let mut input: Vec<u8, 29> = Vec::new();
+    let data_loss = false;
     loop {
             //hprintln!("here1");
             let r = UART.modify(|uart| uart.get_bytes(&mut buf));
@@ -80,7 +79,6 @@ fn main() -> ! {
 
             if let Ok(res) = NewProtocol::new_from_uart(&input){
                 let mut buf: [u8; 29] = [0; 29];
-
                 if res.function == 0x01{
                     if let Ok(ID) = UART.modify(|uart| uart.save_note(res.data, res.data_len)) {
                         let mut note: [u8; 20] = [0; 20];

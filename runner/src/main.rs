@@ -17,7 +17,6 @@ use crate::Function::{ADD, DELETE, READ};
 /// modify the runner to work with your protocol and your interface.
 fn main() {
     let mut fault = false;
-    let mut already_start = false;
     // The code below basically starts the qemu
     let binary = args().nth(1).unwrap();
     // println!("{} is inside the binary", binary);
@@ -27,21 +26,19 @@ fn main() {
         return;
     }
     loop {
-        if already_start == false {
-            println!("
-                  ---------------------------------------------------------------------\n
-                  |                                                                    |\n
-                  |   Dear Runner! Please provide your input! Enter -h/help for help   |\n
-                  |                                                                    |\n
-                  ---------------------------------------------------------------------\n
-                  "); // If random stuff is input, display the instruction to call help
-        }
-        already_start = true;
+        println!("
+              ---------------------------------------------------------------------\n
+              |                                                                    |\n
+              |   Dear Runner! Please provide your input! Enter -h/help for help   |\n
+              |                                                                    |\n
+              ---------------------------------------------------------------------\n
+              "); // If random stuff is input, display the instruction to call help
+
         if fault == true {
             println!("Dear Runner! Please provide a valid input! Enter -h for help!");
         }
         fault = false;
-
+        let mut test = false;
 
 
         // Get the things user iput from terminal -> user_input
@@ -56,6 +53,8 @@ fn main() {
             continue;
         }
         let mut buf = [0; 29];
+        let mut test_buf = [0;29];
+        let mut se_result = Ok(());
         match user_input.as_str() {
             "help\n" | "-h\n" => {
                 println!("
@@ -78,12 +77,12 @@ fn main() {
             _ => {
                 match commands[0] {
                     "-a" | "add" => {
-                        NewProtocol::new_to_uart(&mut buf, ADD, String::from(commands[1]), 0);
+                        se_result = NewProtocol::new_to_uart(&mut buf, ADD, String::from(commands[1]), 0);
                     },
                     "-d" | "delete" => {
                         match commands[1].trim().parse::<u8>() {
                             Ok(id) => {
-                                NewProtocol::new_to_uart(&mut buf, DELETE, String::from(""), id);
+                                se_result = NewProtocol::new_to_uart(&mut buf, DELETE, String::from(""), id);
                             },
                             Err(_) => {
                                 fault = true;
@@ -94,7 +93,7 @@ fn main() {
                     "-r" | "read" => {
                         match commands[1].trim().parse::<u8>() {
                             Ok(id) => {
-                                NewProtocol::new_to_uart(&mut buf, READ, String::from(""), id);
+                                se_result = NewProtocol::new_to_uart(&mut buf, READ, String::from(""), id);
                             },
                             Err(_) => {
                                 fault = true;
@@ -102,47 +101,57 @@ fn main() {
                             },
                         }
                     },
+                    "-t" | "test" => {
+                        test = true;
+                    }
                     _ => {
                         println!("Please provide a valid command. Enter -h/help for help!");
                     },
                 }
             },
         }
-        runner.write_all(&buf);
-
-        let mut v = vec![];
-        'inner: loop{
-            let mut buf = [0; 29];
-            let r = runner.read(&mut buf).unwrap();
-            v.write_all(&buf[..r]).unwrap();
-
-            let mut input: Vec<u8, 29> = Vec::new();
-            for i in 0..v.len(){
-                input.push(v[i]);
+        if se_result.is_ok(){
+            if test{
+                runner.write_all(&test_buf);
+            }else {
+                runner.write_all(&buf);
             }
 
-            match NewProtocol::new_from_uart(&input) {
-                Ok(res) => {
+            let mut v = vec![];
+            'inner: loop{
+                let mut buf = [0; 29];
+                let r = runner.read(&mut buf).unwrap();
+                v.write_all(&buf[..r]).unwrap();
 
-                    let printout = String::from_utf8(res.data.to_vec()).unwrap();
-                    println!("NOTE ID: {}: {}", res.id, printout );
-                    break 'inner;
+                let mut input: Vec<u8, 29> = Vec::new();
+                for i in 0..v.len(){
+                    input.push(v[i]);
                 }
-                Err(err) => {
-                    if input.len() == 29{
-                        match err {
-                            UartError::MessageWrong => println!("Message wrong"),
-                            UartError::NotEnoughBytes => println!("NotEnoughBytes"),
-                            UartError::TooManyBytes => println!("TooManyBytes"),
-                            UartError::ChecksumWrong => println!("ChecksumWrong"),
-                        }
 
-                        println!("Please check your command!!!");
+                match NewProtocol::new_from_uart(&input) {
+                    Ok(res) => {
+
+                        let printout = String::from_utf8(res.data.to_vec()).unwrap();
+                        println!("///////NOTE ID IS: {} ..........{}///////", res.id, printout );
                         break 'inner;
                     }
+                    Err(err) => {
+                        if input.len() == 29{
+                            match err {
+                                UartError::MessageWrong => println!("Message wrong"),
+                                UartError::NotEnoughBytes => println!("Byte loss"),
+                                UartError::TooManyBytes => println!("Too Many Bytes"),
+                                UartError::ChecksumWrong => println!("Checksum Wrong"),
+                            }
+                            println!("Please check your input!!!");
+                            break 'inner;
+                        }
+                    }
                 }
-            }
-        };
+            };
+        }
+        else {println!("Your note has more than 20 bytes, too long!")}
+
     }
     println!("
                 ---------------------------------------------------------------------\n
@@ -186,7 +195,7 @@ pub enum Function{
 }
 
 impl NewProtocol {
-    pub fn new_to_uart(dest: &mut [u8], function: Function, note: String, id: u8) -> Result<usize, UartError> {
+    pub fn new_to_uart(dest: &mut [u8], function: Function, note: String, id: u8) -> Result<(), UartError> {
         match function {
             Function::ADD=> {
                 let note_str = note.as_str();
@@ -221,7 +230,7 @@ impl NewProtocol {
                     dest[i] = serial[i];
                 }
 
-                Ok(serial.len())
+                Ok(())
             },
             Function::READ => {
                 let mut data: [u8; 20] = [0; 20];
@@ -243,7 +252,7 @@ impl NewProtocol {
                 for i in 0..serial.len(){
                     dest[i] = serial[i];
                 }
-                Ok(serial.len())
+                Ok(())
             },
             Function::DELETE => {
                 let mut data: [u8; 20] = [0; 20];
@@ -265,7 +274,7 @@ impl NewProtocol {
                 for i in 0..serial.len(){
                     dest[i] = serial[i];
                 }
-                Ok(serial.len())
+                Ok(())
             },
         }
 
@@ -290,114 +299,4 @@ impl NewProtocol {
         if sum_check != input_data.check_sum{ return Err(UartError::ChecksumWrong); }
         Ok(input_data)
     }
-}
-
-
-
-
-#[derive(Debug, PartialEq, Eq)]
-pub enum ExampleProtocol {
-    Number(usize),
-    Text(String),
-}
-
-impl ExampleProtocol {
-    /// convert a message in this protocol (self) to bytes (dest) (Serialization)
-    pub fn to_uart(&self, dest: &mut [u8]) -> Result<usize, UartError> {
-        match self {
-            ExampleProtocol::Number(n) => {
-                let n = *n as u32;
-                let bytes = n.to_le_bytes();
-                dest[0] = 0;
-                dest[1..=4].copy_from_slice(&bytes);
-                Ok(5)
-            }
-            ExampleProtocol::Text(s) => {
-                let bytes = s.as_bytes();
-                if bytes.len() > dest.len() - 1 {
-                    return Err(UartError::TooManyBytes);
-                }
-                dest[0] = 1;
-                let len = (bytes.len() as u32).to_le_bytes();
-                dest[1..=4].copy_from_slice(&len);
-                dest[5..5 + bytes.len()].copy_from_slice(bytes);
-
-                Ok(bytes.len() + 5)
-            }
-        }
-    }
-
-    /// Convert bytes (data) into a message (Self in return). (Deserialization)
-    pub fn from_uart(data: &[u8]) -> Result<(Self, usize), UartError> {
-        if data.is_empty() {
-            return Err(UartError::NotEnoughBytes);
-        }
-        match data[0] {
-            0 => {
-                if data.len() < 5 {
-                    return Err(UartError::NotEnoughBytes);
-                }
-                let mut bytes = [0; 4];
-                bytes.copy_from_slice(&data[1..5]);
-                let n = u32::from_le_bytes(bytes);
-                Ok((ExampleProtocol::Number(n as usize), 5))
-            }
-            1 => {
-                if data.len() < 5 {
-                    return Err(UartError::NotEnoughBytes);
-                }
-                let mut bytes = [0; 4];
-                bytes.copy_from_slice(&data[1..5]);
-                let len = u32::from_le_bytes(bytes) as usize;
-                if data.len() < 5 + len {
-                    return Err(UartError::NotEnoughBytes);
-                }
-                let s = String::from_utf8(data[5..5 + len].to_vec()).unwrap();
-                Ok((ExampleProtocol::Text(s), 5 + len))
-            }
-            _ => Err(UartError::NotEnoughBytes),
-        }
-    }
-}
-
-
-#[test]
-fn test_print() {
-    let b = "0".as_bytes();
-    let mut data: [u8; 20] = [0; 20];
-    for i in 0..b.len(){
-        data[i] = b[i];
-    }
-    let mut sum: u32 = 0x00;
-    for i in 0..data.len(){
-        sum += data[i as usize] as u32;
-    }
-    sum = sum + 0x69 + 0x69 + 0x01 + 0x0b;
-    let mut check_sum:[u8; 4] = [0, 0, 0, 0];
-    for i in 0..4{
-        sum = sum >> i * 4;
-        check_sum[i] = (sum & 0xff) as u8;
-    }
-    let a = NewProtocol{
-        start_num: [0x69, 0x69],
-        function: 0x01,
-        id: 0x00,
-        data_len: 11,
-        data,
-        check_sum,
-    };
-
-    let c: Vec<u8, 29> = to_vec(&a).unwrap();
-
-    //match  NewProtocol::new_from_uart(&c){
-        //Ok(res) =>{
-            let res = NewProtocol::new_from_uart(&c).unwrap();
-            let printout = String::from_utf8(res.data.to_vec()).unwrap();
-            println!("NOTE ID: {}: {}", res.id, printout );
-        // }
-        // Err(err) =>{
-        //     println!("aaa");
-        // }
-
-    //}
 }
