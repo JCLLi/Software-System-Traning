@@ -17,6 +17,7 @@ use crate::Function::{ADD, DELETE, READ};
 /// modify the runner to work with your protocol and your interface.
 fn main() {
     let mut fault = false;
+    let mut start = false;
     // The code below basically starts the qemu
     let binary = args().nth(1).unwrap();
     // println!("{} is inside the binary", binary);
@@ -26,13 +27,16 @@ fn main() {
         return;
     }
     loop {
-        println!("
-              ---------------------------------------------------------------------\n
-              |                                                                    |\n
-              |   Dear Runner! Please provide your input! Enter -h/help for help   |\n
-              |                                                                    |\n
-              ---------------------------------------------------------------------\n
-              "); // If random stuff is input, display the instruction to call help
+        if start == false {
+            println!("
+            ---------------------------------------------------------------------\n
+            |                                                                    |\n
+            |   Dear Runner! Please provide your input! Enter -h/help for help   |\n
+            |                                                                    |\n
+            ---------------------------------------------------------------------\n
+            "); // If random stuff is input, display the instruction to call help
+            start = true;
+        }
 
         if fault == true {
             println!("Dear Runner! Please provide a valid input! Enter -h for help!");
@@ -48,8 +52,8 @@ fn main() {
         stdin.read_line(&mut user_input).expect("What you have input is not valid");
 
         // Now parse the user_input
-        let commands = user_input.as_str().split(" ").collect::<std::vec::Vec<&str>>();
-        if commands.len() != 2 && !(user_input.as_str() == "help\n" || user_input.as_str() == "-h\n" || user_input.as_str() == "exit\n") {
+        let commands = user_input.as_str().trim().split(" ").collect::<std::vec::Vec<&str>>();
+        if commands.len() != 2 && !(user_input.as_str().trim() == "help" || user_input.as_str().trim() == "-h" || user_input.as_str().trim() == "exit") {
             println!("Please provide the command in the right format! Enter -h for help!");
             continue;
         }
@@ -57,8 +61,8 @@ fn main() {
         let mut test_buf1 = [0; 28];
         let mut test_buf2 = [0; 29];
         let mut se_result = Ok(());
-        match user_input.as_str() {
-            "help\n" | "-h\n" => {
+        match user_input.as_str().trim() {
+            "help" | "-h" => {
                 println!("
                           Format of command: [command]  [message] or [ID]\n
                             Commands:   -h/help:        Display help message\n
@@ -73,7 +77,7 @@ fn main() {
                             ");
                 continue;
             }
-            "exit\n" => {
+            "exit" => {
                 break;
             },
             _ => {
@@ -111,6 +115,7 @@ fn main() {
                     }
                     _ => {
                         println!("Please provide a valid command. Enter -h/help for help!");
+                        continue;
                     },
                 }
             },
@@ -118,13 +123,13 @@ fn main() {
         if se_result.is_ok(){
             if test1{
                 println!("test data loss");
-                runner.write_all(&test_buf1);
+                runner.write_all(&test_buf1).expect("test1, write_all function failed");
             }else if test2 {
                 println!("test data doesn't follow the protocol");
-                runner.write_all(&test_buf2);
+                runner.write_all(&test_buf2).expect("test1, write_all function failed");
             }
             else {
-                runner.write_all(&buf);
+                runner.write_all(&buf).expect("write_all function failed in runner/main.rs");
             }
             let mut v = vec![];
             'inner: loop{
@@ -134,13 +139,13 @@ fn main() {
 
                 let mut input: Vec<u8, 29> = Vec::new();
                 for i in 0..v.len(){
-                    input.push(v[i]);
+                    input.push(v[i]).expect("push v[i] into input failed in runner/main.rs");
                 }
 
                 match NewProtocol::new_from_uart(&input) {
                     Ok(res) => {
                         let printout = String::from_utf8(res.data.to_vec()).unwrap();
-                        println!("///////NOTE ID IS: {} ..........{}///////", res.id, printout );
+                        println!("///////ID: {} ..........NOTE: {}///////", res.id, printout );
                         break 'inner;
                     }
                     Err(err) => {
