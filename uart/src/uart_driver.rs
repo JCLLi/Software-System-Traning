@@ -8,7 +8,7 @@ use nrf51_pac::NVIC;
 use nrf51_pac::uart0;
 use nrf51_pac::uart0::{baudrate, enable, intenclr, intenset, tasks_startrx, tasks_starttx, txd};
 use crate::buffer::UartBuffer;
-use cortex_m_semihosting::hprintln;
+use cortex_m_semihosting::{hprint, hprintln};
 use heapless::Vec;
 
 /// This struct holds all the global state of the uart driver. Generally, there
@@ -139,6 +139,14 @@ impl UartDriver {
 
     pub fn delete_note(&mut self, ID: u8) -> (u8, [u8; 20]){
         let mut output: [u8; 20] = [0; 20];
+        if ID == 0{
+            let error = "Doesn't exist".as_bytes();
+            for i in 0..error.len() {
+                output[i] = error[i];
+            }
+            return (error.len() as u8, output);
+        }
+        let ID = ID -1;
         if ID > 19 {
             let error = "Out of scope".as_bytes();
             for i in 0..error.len() {
@@ -155,7 +163,7 @@ impl UartDriver {
         }
         else {
             self.notes[ID as usize] = None;
-            let delete = "Deleted".as_bytes();
+            let delete = "No related note".as_bytes();
             for i in 0..delete.len(){
                 output[i] = delete[i];
             }
@@ -167,6 +175,14 @@ impl UartDriver {
 
     pub fn read_note(&mut self, ID: u8) -> (u8, [u8; 20]) {
         let mut output = [0; 20];
+        if ID == 0{
+            let error = "Doesn't exist".as_bytes();
+            for i in 0..error.len() {
+                output[i] = error[i];
+            }
+            return (error.len() as u8, output);
+        }
+        let ID = ID -1;
         if ID > 19{
             let error = "Out of scope".as_bytes();
             for i in 0..error.len() {
@@ -193,29 +209,24 @@ impl UartDriver {
 /// Interrupt handler for UART0
 /// It's called when the enabled interrupts for uart0 are triggered
 unsafe fn UART0() {
-    //cortex_m::interrupt::disable();
-    //hprintln!("The interrupt occured");
 
     UART.modify(|uart| if uart.uart.events_rxdrdy.read().bits() != 0 {
         uart.uart.events_rxdrdy.reset();
         let byte = uart.uart.rxd.read().bits() as u8;
         if !uart.buffer.is_full() {
             uart.buffer.write_byte(byte).unwrap();
-            //hprintln!("Now reading {} from RXD into ringbuffer", byte as char);
         }else {
             uart.buffer.overwrite(byte);
-            //hprintln!("Now reading {} from RXD and OVERwriting into ringbuffer", byte as char);
         }
     });
 
     UART.modify(|uart| if uart.uart.events_txdrdy.read().bits() != 0 {
-        //hprintln!("tx");
+
         uart.uart.events_txdrdy.reset();
         if !uart.buffer.is_empty() {
             let byte = uart.buffer.read_byte().unwrap();
             unsafe {uart.uart.txd.write(|w: &mut txd::W| w.txd().bits(byte));}
             uart.tx_filled = true;
-            //hprintln!("Now sending {} from ringbuffer via TXD", byte as char);
         }else {
             uart.tx_filled = false;
         }

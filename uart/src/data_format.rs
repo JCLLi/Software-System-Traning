@@ -29,13 +29,13 @@ pub enum Function{
     ADD,
     READ,
     DELETE,
+    ERROR,
 }
 
 impl NewProtocol{
     pub fn new_to_uart(dest: &mut [u8], function: Function, note: [u8; 20], id: u8, data_len: u8){
         match function {
             Function::ADD=> {
-
                 let mut sum: u32 = 0x00;
                 for i in 0..data_len{
                     sum += note[i as usize] as u32;
@@ -105,6 +105,29 @@ impl NewProtocol{
                     dest[i] = serial[i];
                 }
             },
+            Function::ERROR => {
+                let mut sum = 0x69 + 0x69 + data_len as u32;
+                for i in 0..20{
+                    sum += note[i] as u32;
+                }
+                let mut check_sum:[u8; 4] = [0, 0, 0, 0];
+                for i in 0..4{
+                    check_sum[i] = (sum & 0xff) as u8;
+                    sum = sum >> 8;
+                }
+                let output = NewProtocol{
+                    start_num: [0x69, 0x69],
+                    function: 0x00,
+                    id,
+                    data_len,
+                    data: note,
+                    check_sum,
+                };
+                let serial: Vec<u8, 29> = to_vec(&output).unwrap();
+                for i in 0..serial.len(){
+                    dest[i] = serial[i];
+                }
+            }
         }
 
     }

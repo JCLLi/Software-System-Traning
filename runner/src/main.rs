@@ -38,7 +38,8 @@ fn main() {
             println!("Dear Runner! Please provide a valid input! Enter -h for help!");
         }
         fault = false;
-        let mut test = false;
+        let mut test1 = false;
+        let mut test2 = false;
 
 
         // Get the things user iput from terminal -> user_input
@@ -53,7 +54,8 @@ fn main() {
             continue;
         }
         let mut buf = [0; 29];
-        let mut test_buf = [0;29];
+        let mut test_buf1 = [0; 28];
+        let mut test_buf2 = [0; 29];
         let mut se_result = Ok(());
         match user_input.as_str() {
             "help\n" | "-h\n" => {
@@ -101,8 +103,11 @@ fn main() {
                             },
                         }
                     },
-                    "-t" | "test" => {
-                        test = true;
+                    "-t1" | "test1" => {
+                        test1 = true;
+                    }
+                    "-t2" | "test2" => {
+                        test2 = true;
                     }
                     _ => {
                         println!("Please provide a valid command. Enter -h/help for help!");
@@ -111,12 +116,16 @@ fn main() {
             },
         }
         if se_result.is_ok(){
-            if test{
-                runner.write_all(&test_buf);
-            }else {
+            if test1{
+                println!("test data loss");
+                runner.write_all(&test_buf1);
+            }else if test2 {
+                println!("test data doesn't follow the protocol");
+                runner.write_all(&test_buf2);
+            }
+            else {
                 runner.write_all(&buf);
             }
-
             let mut v = vec![];
             'inner: loop{
                 let mut buf = [0; 29];
@@ -137,13 +146,16 @@ fn main() {
                     }
                     Err(err) => {
                         if input.len() == 29{
+                            // for i in input {
+                            //     print!("a: {}, ", i);
+                            // }
                             match err {
-                                UartError::MessageWrong => println!("Message wrong"),
-                                UartError::NotEnoughBytes => println!("Byte loss"),
-                                UartError::TooManyBytes => println!("Too Many Bytes"),
-                                UartError::ChecksumWrong => println!("Checksum Wrong"),
+                                UartError::MessageWrong => println!("Message from uart wrong"),
+                                UartError::NotEnoughBytes => println!("Data byte loss from uart"),
+                                UartError::TooManyBytes => println!("Too many bytes please check your input!!!"),
+                                UartError::ChecksumWrong => println!("Checksum from uart wrong"),
                             }
-                            println!("Please check your input!!!");
+                            println!("");
                             break 'inner;
                         }
                     }
@@ -151,7 +163,8 @@ fn main() {
             };
         }
         else {println!("Your note has more than 20 bytes, too long!")}
-
+        test1 = false;
+        test2 = false;
     }
     println!("
                 ---------------------------------------------------------------------\n
