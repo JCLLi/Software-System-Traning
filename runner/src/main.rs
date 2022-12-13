@@ -324,12 +324,12 @@ impl NewProtocol {
         }
         sum = sum + input_data.start_num[0] as u32 + input_data.start_num[1] as u32 + input_data.function as u32 + input_data.id as u32
             + input_data.data_len as u32;
-        println!("function {}", input_data.function);
+        // println!("function {}", input_data.function);
         let mut sum_check: [u8; 4] = [0, 0, 0, 0];
         for i in 0..4{
             sum_check[i] = (sum & 0xff) as u8;
             sum = sum >> 8;
-            println!("checksum: {:0x}, sumcheck: {:0x}", input_data.check_sum[i], sum_check[i]);
+            // println!("checksum: {:0x}, sumcheck: {:0x}", input_data.check_sum[i], sum_check[i]);
         }
         if sum_check != input_data.check_sum{ return Err(UartError::ChecksumWrong); }
         Ok(input_data)
