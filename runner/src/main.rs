@@ -153,7 +153,14 @@ fn main() {
                     match NewProtocol::new_from_uart(&input) {
                         Ok(res) => {
                             let printout = String::from_utf8(res.data.to_vec()).unwrap();
-                            println!("///////ID: {} ..........NOTE: {}///////", res.id, printout );
+                            if res.function == 1 || res.function == 3 {
+                                println!("///////ID: {} ..........Message from UART      : {}", res.id, printout);
+                            }else if res.function == 2{
+                                println!("///////ID: {} ..........Note is                : {}", res.id, printout);
+                            }else {
+                                println!("///////ID: {} ..........Error message from UART: {}", res.id, printout);
+                            }
+
                             break 'inner;
                         }
                         Err(err) => {
@@ -317,10 +324,12 @@ impl NewProtocol {
         }
         sum = sum + input_data.start_num[0] as u32 + input_data.start_num[1] as u32 + input_data.function as u32 + input_data.id as u32
             + input_data.data_len as u32;
+        println!("function {}", input_data.function);
         let mut sum_check: [u8; 4] = [0, 0, 0, 0];
         for i in 0..4{
             sum_check[i] = (sum & 0xff) as u8;
             sum = sum >> 8;
+            println!("checksum: {:0x}, sumcheck: {:0x}", input_data.check_sum[i], sum_check[i]);
         }
         if sum_check != input_data.check_sum{ return Err(UartError::ChecksumWrong); }
         Ok(input_data)

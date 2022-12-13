@@ -10,6 +10,9 @@ use nrf51_pac::uart0::{baudrate, enable, intenclr, intenset, tasks_startrx, task
 use crate::buffer::UartBuffer;
 use cortex_m_semihosting::{hprint, hprintln};
 use heapless::Vec;
+use nrf51_pac::ficr::ER;
+use crate::data_format::Function;
+use crate::data_format::Function::{DELETE, ERROR, READ};
 
 /// This struct holds all the global state of the uart driver. Generally, there
 /// is only one instance of this in the global `UART` variable (see `main.rs`).
@@ -137,14 +140,14 @@ impl UartDriver {
         };
     }
 
-    pub fn delete_note(&mut self, ID: u8) -> (u8, [u8; 20]){
+    pub fn delete_note(&mut self, ID: u8) -> (u8, [u8; 20], Function){
         let mut output: [u8; 20] = [0; 20];
         if ID == 0{
             let error = "Doesn't exist".as_bytes();
             for i in 0..error.len() {
                 output[i] = error[i];
             }
-            return (error.len() as u8, output);
+            return (error.len() as u8, output, ERROR);
         }
         let ID = ID -1;
         if ID > 19 {
@@ -152,14 +155,14 @@ impl UartDriver {
             for i in 0..error.len() {
                 output[i] = error[i];
             }
-            return (error.len() as u8, output);
+            return (error.len() as u8, output, ERROR);
         }
         if self.notes[ID as usize] == None{
             let error = "No related note ".as_bytes();
             for i in 0..error.len(){
                 output[i] = error[i];
             }
-            return (error.len() as u8, output)
+            return (error.len() as u8, output, ERROR)
         }
         else {
             self.notes[ID as usize] = None;
@@ -167,20 +170,20 @@ impl UartDriver {
             for i in 0..delete.len(){
                 output[i] = delete[i];
             }
-            return (delete.len() as u8, output);
+            return (delete.len() as u8, output, DELETE);
         }
 
 
     }
 
-    pub fn read_note(&mut self, ID: u8) -> (u8, [u8; 20]) {
+    pub fn read_note(&mut self, ID: u8) -> (u8, [u8; 20], Function) {
         let mut output = [0; 20];
         if ID == 0{
             let error = "Doesn't exist".as_bytes();
             for i in 0..error.len() {
                 output[i] = error[i];
             }
-            return (error.len() as u8, output);
+            return (error.len() as u8, output, ERROR);
         }
         let ID = ID -1;
         if ID > 19{
@@ -188,19 +191,19 @@ impl UartDriver {
             for i in 0..error.len() {
                 output[i] = error[i];
             }
-            return (error.len() as u8, output);
+            return (error.len() as u8, output, ERROR);
         }
         if let Some((len, note)) = self.notes[ID as usize]{
             for i in 0..20 {
                 output[i] = note[i];
             }
-            return (len, output);
+            return (len, output, READ);
         } else {
             let error = "Doesn't exist".as_bytes();
             for i in 0..error.len() {
                 output[i] = error[i];
             }
-            return (error.len() as u8, output);
+            return (error.len() as u8, output, ERROR);
         }
     }
 }

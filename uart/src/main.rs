@@ -96,14 +96,24 @@ fn main() -> ! {
                             for i in 0.."Failed, no space".as_bytes().len(){
                                 note[i] = ("Failed, no space".as_bytes())[i];
                             }
-                            NewProtocol::new_to_uart(&mut buf, ADD, note, 0, "Failed, no space".as_bytes().len() as u8);
+                            NewProtocol::new_to_uart(&mut buf, ERROR, note, 0, "Failed, no space".as_bytes().len() as u8);
                         }
                     }else if res.function == 0x03{
-                        let (len, data) = UART.modify(|uart| uart.delete_note(res.id));
-                        NewProtocol::new_to_uart(&mut buf, DELETE, data, res.id, len);
+                        let (len, data, function) = UART.modify(|uart| uart.delete_note(res.id));
+                        let mut id = res.id;
+                        match function {
+                            ERROR => id = 0,
+                            _ => (),
+                        }
+                        NewProtocol::new_to_uart(&mut buf, function, data, id, len);
                     }else{
-                        let (len, data) = UART.modify(|uart| uart.read_note(res.id));
-                        NewProtocol::new_to_uart(&mut buf, READ, data, res.id, len);
+                        let (len, data, function) = UART.modify(|uart| uart.read_note(res.id));
+                        let mut id = res.id;
+                        match function {
+                            ERROR => id = 0,
+                            _ => (),
+                        }
+                        NewProtocol::new_to_uart(&mut buf, function, data, id, len);
                     }
 
                     UART.modify(|uart| {
