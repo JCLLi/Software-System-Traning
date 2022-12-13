@@ -69,6 +69,8 @@ fn main() {
                                         -a/add:         Add a note\n
                                         -d/delete:      Delete a note\n
                                         -r/read:        Read a note\n
+                                        -t1/test1:      Test the program on data loss\n
+                                        -t2/test2:      Test the program on corrupted data\n
                                         exit:           Exit program\n
 
                             Message:    Whatever you want to store in the note\n
