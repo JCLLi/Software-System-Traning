@@ -126,7 +126,8 @@ fn main() {
             else {
                 runner.write_all(&buf);
             }
-            let mut v = vec![];
+            let mut data_recv = false;
+            let mut wait_cycle = 0;
             'inner: loop{
                 let mut buf = [0; 29];
                 let r = runner.read(&mut buf).unwrap();
@@ -134,31 +135,38 @@ fn main() {
 
                 let mut input: Vec<u8, 29> = Vec::new();
                 for i in 0..v.len(){
+                    data_recv = true;
+                    wait_cycle = 0;
                     input.push(v[i]);
                 }
-
-                match NewProtocol::new_from_uart(&input) {
-                    Ok(res) => {
-                        let printout = String::from_utf8(res.data.to_vec()).unwrap();
-                        println!("///////NOTE ID IS: {} ..........{}///////", res.id, printout );
-                        break 'inner;
-                    }
-                    Err(err) => {
-                        if input.len() == 29{
-                            // for i in input {
-                            //     print!("a: {}, ", i);
-                            // }
-                            match err {
-                                UartError::MessageWrong => println!("Message from uart wrong"),
-                                UartError::NotEnoughBytes => println!("Data byte loss from uart"),
-                                UartError::TooManyBytes => println!("Too many bytes please check your input!!!"),
-                                UartError::ChecksumWrong => println!("Checksum from uart wrong"),
-                            }
-                            println!("");
+                if wait_cycle == 100 {
+                    println!("Data byte loss from uart");
+                    break 'inner;
+                }
+                else {
+                    match NewProtocol::new_from_uart(&input) {
+                        Ok(res) => {
+                            let printout = String::from_utf8(res.data.to_vec()).unwrap();
+                            println!("///////NOTE ID IS: {} ..........{}///////", res.id, printout );
                             break 'inner;
+                        }
+                        Err(err) => {
+                            if input.len() == 29{
+                                // for i in input {
+                                //     print!("a: {}, ", i);
+                                // }
+                                match err {
+                                    UartError::MessageWrong => println!("Message from uart wrong"),
+                                    UartError::TooManyBytes => println!("Too many bytes please check your input!!!"),
+                                    UartError::ChecksumWrong => println!("Checksum from uart wrong"),
+                                    UartError::NotEnoughBytes => (),
+                                }
+                                break 'inner;
+                            }
                         }
                     }
                 }
+                if data_recv { wait_cycle += 1; }
             };
         }
         else {println!("Your note has more than 20 bytes, too long!")}
