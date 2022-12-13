@@ -43,6 +43,9 @@ pub static UART: OwnMutex<OnceCell<UartDriver>> = OwnMutex::new(OnceCell::new())
 #[entry]
 fn main() -> ! {
     // initialize the allocator
+    /// This one is unsafe because the heap_size input into the function init should be smaller than
+    /// the heap size limit. We don't change the HEAP_SIZE here and keep it with 4096. But if it is
+    /// changed mistakenly, it might cause errors.
     unsafe { ALLOCATOR.init(cortex_m_rt::heap_start() as usize, HEAP_SIZE) }
 
     // get the peripherals from cortex_m
@@ -120,6 +123,11 @@ fn main() -> ! {
                         uart.put_bytes(&buf);
                         if !uart.tx_filled{
                             let byte: u8 = uart.buffer.read_byte().unwrap();
+                            /// This one is unsafe because of any unknown possible number can be written into txd
+                            /// register. But in this case, the size of variable 'byte' input into the txd has a fixed
+                            /// size of u8 which make it sound. And in this case, write one byte to txd to trigger the
+                            /// interrupt;
+                            ///
                             unsafe {uart.uart.txd.write(|w: &mut nrf51_pac::uart0::txd::W| w.txd().bits(byte));}
                         }
                     });
@@ -146,6 +154,11 @@ fn main() -> ! {
                                     uart.put_bytes(&output);
                                     if !uart.tx_filled{
                                         let byte: u8 = uart.buffer.read_byte().unwrap();
+                                        /// This one is unsafe because of any unknown possible number can be written into txd
+                                        /// register. But in this case, the size of variable 'byte' input into the txd has a fixed
+                                        /// size of u8 which make it sound. And in this case, write one byte to txd to trigger the
+                                        /// interrupt;
+                                        ///
                                         unsafe {uart.uart.txd.write(|w: &mut nrf51_pac::uart0::txd::W| w.txd().bits(byte));}
                                     }
                                 });
@@ -169,6 +182,11 @@ fn main() -> ! {
                                 uart.put_bytes(&output);
                                 if !uart.tx_filled{
                                     let byte: u8 = uart.buffer.read_byte().unwrap();
+                                    /// This one is unsafe because of any unknown possible number can be written into txd
+                                    /// register. But in this case, the size of variable 'byte' input into the txd has a fixed
+                                    /// size of u8 which make it sound. And in this case, write one byte to txd to trigger the
+                                    /// interrupt;
+                                    ///
                                     unsafe {uart.uart.txd.write(|w: &mut nrf51_pac::uart0::txd::W| w.txd().bits(byte));}
                                 }
                             });

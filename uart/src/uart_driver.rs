@@ -64,11 +64,30 @@ impl UartDriver {
             w.enable().enabled()
         });
 
+        /// The function bits() is unsafe because numbers except 0 or 1 written in tasks_startrx/tx
+        /// can cause fatal errors. But here it is necessary and sound. Because the task_startrx/tx
+        /// needs to be enabled or triggered to start tx/rx. Write a 0 to it is disabling the task and
+        /// a 1 mean the task is enabled. It basically won't cause fatal error.
+        ///
         uart_driver.uart.tasks_startrx.write(|w: &mut tasks_startrx::W| unsafe {w.bits(1)});
         uart_driver.uart.tasks_starttx.write(|w: &mut tasks_starttx::W| unsafe {w.bits(1)});
+
+        /// Changing priority levels can break priority-based critical sections. If several kinds of
+        /// interrupts are used. Mistakenly changing the priority can cause effect on urgent tasks
+        /// that originally required high-priority execution. And when different interrupt are with
+        /// same priority, it can cause errors. But because only one uart interrupt is used here so
+        /// it can be taken as a safe function.
+        ///
         unsafe {
-            nvic.set_priority(Interrupt::UART0 ,7);
+            nvic.set_priority(Interrupt::UART0 ,1);
         }
+
+        /// This function is unsafe because it can break mask-based critical sections. If the program
+        /// about several thread rely on the Mutex or something else with critical sections, which
+        /// need masked interrupt to prevent share data access. But in our case, no several threads,
+        /// the only usage of Mutex is prevent the happening of interrupt when the program is trying
+        /// to modify the static value.
+        ///
         unsafe {
             NVIC::unmask(Interrupt::UART0);
         }
@@ -85,7 +104,6 @@ impl UartDriver {
         self.uart.intenset.write(|w: &mut intenset::W| {
             w.txdrdy().set()
         });
-        //self.uart.txd.write(|w: &mut txd::W| unsafe{w.txd().bits(0)});
     }
 
     /// Pushes a single byte over uart
@@ -211,7 +229,7 @@ impl UartDriver {
 #[interrupt]
 /// Interrupt handler for UART0
 /// It's called when the enabled interrupts for uart0 are triggered
-unsafe fn UART0() {
+fn UART0() {
 
     UART.modify(|uart| if uart.uart.events_rxdrdy.read().bits() != 0 {
         uart.uart.events_rxdrdy.reset();
@@ -228,6 +246,10 @@ unsafe fn UART0() {
         uart.uart.events_txdrdy.reset();
         if !uart.buffer.is_empty() {
             let byte = uart.buffer.read_byte().unwrap();
+            /// This one is unsafe because of any unknown possible number can be written into txd
+            /// register. But in this case, the size of variable 'byte' input into the txd has a fixed
+            /// size of u8 which make it sound.
+            ///
             unsafe {uart.uart.txd.write(|w: &mut txd::W| w.txd().bits(byte));}
             uart.tx_filled = true;
         }else {
