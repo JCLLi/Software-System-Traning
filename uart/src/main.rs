@@ -26,9 +26,13 @@ use once_cell::OnceCell;
 use own_mutex::OwnMutex;
 use uart_driver::UartDriver;
 
-use data_format::ExampleProtocol;
-
 use cortex_m_rt::entry;
+use cortex_m_semihosting::{hprint, hprintln};
+
+use heapless::Vec;
+use postcard::to_vec;
+use crate::data_format::Function::{ADD, DELETE, ERROR, READ};
+use crate::data_format::{NewProtocol, UartError};
 
 #[global_allocator]
 static ALLOCATOR: CortexMHeap = CortexMHeap::empty();
@@ -39,6 +43,9 @@ pub static UART: OwnMutex<OnceCell<UartDriver>> = OwnMutex::new(OnceCell::new())
 #[entry]
 fn main() -> ! {
     // initialize the allocator
+    /// This one is unsafe because the heap_size input into the function init should be smaller than
+    /// the heap size limit. We don't change the HEAP_SIZE here and keep it with 4096. But if it is
+    /// changed mistakenly, it might cause errors.
     unsafe { ALLOCATOR.init(cortex_m_rt::heap_start() as usize, HEAP_SIZE) }
 
     // get the peripherals from cortex_m
@@ -62,39 +69,142 @@ fn main() -> ! {
     // then infinitely listen for messages. Read them into buf, deserialize them, create
     // a response, serialize the response and write it back to the UART.
     let mut buf = [0u8; 64];
+    let mut input: Vec<u8, 29> = Vec::new();
+    let data_loss = false;
+    let mut data_trans = false;
+    let mut wait_cycle = 0;
     loop {
-        {
+            //hprintln!("here1");
             let r = UART.modify(|uart| uart.get_bytes(&mut buf));
-
-            if let Ok((s, size)) = ExampleProtocol::from_uart(&buf[..r]) {
-                buf.rotate_left(size);
-
-                let mut b = [0u8; 64];
-                let len = match s {
-                    ExampleProtocol::Number(n) => {
-                        let v = ExampleProtocol::Number(n + 1);
-                        v.to_uart(&mut b).unwrap()
-                    }
-                    ExampleProtocol::Text(s) => {
-                        if s == "Hello" {
-                            ExampleProtocol::Text("World".to_string())
-                                .to_uart(&mut b)
-                                .unwrap()
-                        } else {
-                            ExampleProtocol::Text("Hello".to_string())
-                                .to_uart(&mut b)
-                                .unwrap()
-                        }
-                    }
-                };
-                UART.modify(|uart| uart.put_bytes(&b[0..len]));
+            if r != 0 {
+                data_trans = true;
+                wait_cycle = 0;
             }
+            for i in 0..r{
+                input.push(buf[i]);
+            }
+            match NewProtocol::new_from_uart(&input) {
+                Ok(res) =>{
+                    let mut buf: [u8; 29] = [0; 29];
+                    if res.function == 0x01{
+                        if let Ok(ID) = UART.modify(|uart| uart.save_note(res.data, res.data_len)) {
+                            let mut note: [u8; 20] = [0; 20];
+                            for i in 0.."Done".as_bytes().len(){
+                                note[i] = ("Done".as_bytes())[i];
+                            }
+                            NewProtocol::new_to_uart(&mut buf, ADD, note, ID + 1, "Done".as_bytes().len() as u8);
+                        }
+                        else {
+                            let mut note: [u8; 20] = [0; 20];
+                            for i in 0.."Failed, no space".as_bytes().len(){
+                                note[i] = ("Failed, no space".as_bytes())[i];
+                            }
+                            NewProtocol::new_to_uart(&mut buf, ERROR, note, 0, "Failed, no space".as_bytes().len() as u8);
+                        }
+                    }else if res.function == 0x03{
+                        let (len, data, function) = UART.modify(|uart| uart.delete_note(res.id));
+                        let mut id = res.id;
+                        match function {
+                            ERROR => id = 0,
+                            _ => (),
+                        }
+                        NewProtocol::new_to_uart(&mut buf, function, data, id, len);
+                    }else{
+                        let (len, data, function) = UART.modify(|uart| uart.read_note(res.id));
+                        let mut id = res.id;
+                        match function {
+                            ERROR => id = 0,
+                            _ => (),
+                        }
+                        NewProtocol::new_to_uart(&mut buf, function, data, id, len);
+                    }
+
+                    UART.modify(|uart| {
+                        uart.put_bytes(&buf);
+                        if !uart.tx_filled{
+                            let byte: u8 = uart.buffer.read_byte().unwrap();
+                            /// This one is unsafe because of any unknown possible number can be written into txd
+                            /// register. But in this case, the size of variable 'byte' input into the txd has a fixed
+                            /// size of u8 which make it sound. And in this case, write one byte to txd to trigger the
+                            /// interrupt;
+                            ///
+                            unsafe {uart.uart.txd.write(|w: &mut nrf51_pac::uart0::txd::W| w.txd().bits(byte));}
+                        }
+                    });
+
+                    for i in 0..input.len(){ input.pop(); }
+                    data_trans = false;
+                    wait_cycle = 0;
+                }
+                Err(err) => {
+                    match err {
+                        UartError::NotEnoughBytes => {
+                            if wait_cycle == 100{
+                                for i in 0..buf.len(){
+                                    buf[i] = 0;
+                                }
+                                let error = "Data loss!!".as_bytes();
+                                let mut data:[u8; 20] = [0; 20];
+                                for i in 0..error.len() {
+                                    data[i] = error[i];
+                                }
+                                let mut output: [u8; 29] = [0; 29];
+                                NewProtocol::new_to_uart(&mut output, ERROR, data, 0, error.len() as u8);
+                                UART.modify(|uart| {
+                                    uart.put_bytes(&output);
+                                    if !uart.tx_filled{
+                                        let byte: u8 = uart.buffer.read_byte().unwrap();
+                                        /// This one is unsafe because of any unknown possible number can be written into txd
+                                        /// register. But in this case, the size of variable 'byte' input into the txd has a fixed
+                                        /// size of u8 which make it sound. And in this case, write one byte to txd to trigger the
+                                        /// interrupt;
+                                        ///
+                                        unsafe {uart.uart.txd.write(|w: &mut nrf51_pac::uart0::txd::W| w.txd().bits(byte));}
+                                    }
+                                });
+                                wait_cycle = 0;
+                                data_trans = false;
+                                for i in 0..input.len(){ input.pop(); }
+                            }
+                        }
+                        UartError::MessageWrong => {
+                            for i in 0..buf.len(){
+                                buf[i] = 0;
+                            }
+                            let error = "Message wrong!!".as_bytes();
+                            let mut data:[u8; 20] = [0; 20];
+                            for i in 0..error.len() {
+                                data[i] = error[i];
+                            }
+                            let mut output: [u8; 29] = [0; 29];
+                            NewProtocol::new_to_uart(&mut output, ERROR, data, 0, error.len() as u8);
+                            UART.modify(|uart| {
+                                uart.put_bytes(&output);
+                                if !uart.tx_filled{
+                                    let byte: u8 = uart.buffer.read_byte().unwrap();
+                                    /// This one is unsafe because of any unknown possible number can be written into txd
+                                    /// register. But in this case, the size of variable 'byte' input into the txd has a fixed
+                                    /// size of u8 which make it sound. And in this case, write one byte to txd to trigger the
+                                    /// interrupt;
+                                    ///
+                                    unsafe {uart.uart.txd.write(|w: &mut nrf51_pac::uart0::txd::W| w.txd().bits(byte));}
+                                }
+                            });
+                            wait_cycle = 0;
+                            data_trans = false;
+                            for i in 0..input.len(){ input.pop(); }
+                        }
+                        _ => ()
+                    }
+                }
+            }
+
+        asm::delay(2500000);
+        if data_trans {
+            wait_cycle += 1;
         }
 
-        // Wait a bit for the next uart message. This is just so we don't overflow the UART's buffers
-        // by sending too many messages. In reality, you may want to do this more accurately, like waiting
-        // for the buffers to empty, or waiting for an exact number of (milli)seconds.
-        asm::delay(2500000);
+
     }
 }
 
