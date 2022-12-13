@@ -39,8 +39,8 @@ impl UartDriver {
         // 3. Configure the UART interrupt
         // 5. Set the interrupt priority
         let mut notes: Vec<Option<(u8, [u8; 20])>, 20> = Vec::new();
-        for i in 0..20 {
-            notes.push(None);
+        for _ in 0..20 {
+            notes.push(None).expect("push function in uart/uart_driver crashed");
         }
         let mut uart_driver = UartDriver{
             uart,
@@ -112,7 +112,7 @@ impl UartDriver {
             if !self.buffer.is_full(){break}
         }
 
-        self.buffer.write_byte(byte);
+        self.buffer.write_byte(byte).expect("write_byte function crashed");
     }
 
     /// Reads a single byte from the UART. You may need a buffer to implement this.

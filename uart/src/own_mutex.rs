@@ -22,6 +22,11 @@ pub struct OwnMutex<T> {
 }
 
 /// SAFETY: TODO: write here an explanation why this is safe
+/// sync traits enables OwnMutex to be shared between threads, which is unsafe with static variables.
+/// However, firstly, the chip is single core, hence it would not create multiple threads.
+/// Second, when an interrupt occurs the access to OwnMutex is locked, hence it would not raise data race issues.
+/// When interupts occur, the process is also non-preemptive, hence the data is safe to access. More importantly,
+/// OwnMutex is locked before access.
 unsafe impl<T> Sync for OwnMutex<T> {}
 
 impl<T> OwnMutex<T> {
@@ -39,6 +44,10 @@ impl<T> OwnMutex<T> {
         // let r = f(unsafe {self.uart_driver.get().as_mut().unwrap()});
         // unsafe {cortex_m::interrupt::enable();}
         // r
+
+        /// The use of unsafe code is sound because all interrupts are disabled before accessing uart_driver
+        /// The goal of making uart_driver wrapped by mutex is to prevent its value from changing while other interrupts occurs.
+        /// Hence, the use of the unsafe code is sound.
         free(|_| f(unsafe { self.uart_driver.get().as_mut() }.unwrap()))
     }
 }

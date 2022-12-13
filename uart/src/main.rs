@@ -81,7 +81,7 @@ fn main() -> ! {
                 wait_cycle = 0;
             }
             for i in 0..r{
-                input.push(buf[i]);
+                input.push(buf[i]).expect("push function in uart/main.rs crashed");
             }
             match NewProtocol::new_from_uart(&input) {
                 Ok(res) =>{
@@ -164,7 +164,7 @@ fn main() -> ! {
                                 });
                                 wait_cycle = 0;
                                 data_trans = false;
-                                for i in 0..input.len(){ input.pop(); }
+                                for _ in 0..input.len(){ input.pop(); }
                             }
                         }
                         UartError::MessageWrong => {
@@ -192,7 +192,7 @@ fn main() -> ! {
                             });
                             wait_cycle = 0;
                             data_trans = false;
-                            for i in 0..input.len(){ input.pop(); }
+                            for _ in 0..input.len(){ input.pop(); }
                         }
                         _ => ()
                     }
