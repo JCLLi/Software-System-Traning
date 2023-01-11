@@ -12,8 +12,8 @@ package "X-ray Hardware"{
 component "X-ray Tube" as xt
 component "X-ray Detector" as xd
 
-interface "X-ray \nbeam" as Xray1
-interface "X-ray \noutput" as Xray2
+interface "X-ray\nbeam" as Xray1
+interface "X-ray\nbeam\nthrough\npatient" as Xray2
 }
 
 component Screen as scr
@@ -25,7 +25,6 @@ component "Xray Controller" as xc
 component "Image Processor" as ip
 component "System Configurator" as sc
 database "Procedure Database" as pd
-
 
 
 interface "Optical Information" as xi
