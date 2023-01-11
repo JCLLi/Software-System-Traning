@@ -1,0 +1,79 @@
+@startuml
+top to bottom direction
+component "Patient Table" as pt
+
+package Pedals{
+component "Low-Dose Pedal" as p1
+component "High-Dose Pedal" as p2
+component "Unused Pedal" as p3
+}
+
+package "X-ray Hardware"{
+component "X-ray Tube" as xt
+component "X-ray Detector" as xd
+
+interface "X-ray \nbeam" as Xray1
+interface "X-ray \noutput" as Xray2
+}
+
+component Screen as scr
+component Tablet as ta
+
+component "Pedal Mapper" as pm
+component "Action Logic" as al
+component "Xray Controller" as xc
+component "Image Processor" as ip
+component "System Configurator" as sc
+database "Procedure Database" as pd
+
+
+
+interface "Optical Information" as xi
+interface "Pedal Action" as pa
+interface "X-ray Request" as xr
+interface "X-ray Command" as xcm
+interface "Deactivate/Activate Command" as dac
+interface "X-ray Image" as xg
+interface "Readable Image" as ri
+interface "All configurations and procedures" as acas
+interface "Chosen configuration and procedure" as ccas
+interface "System Configuration" as syco
+interface "Medical procedure" as mp
+
+xt -left- Xray1
+Xray1 )-down- pt
+
+pt -left- Xray2
+Xray2 )-left- xd
+xd -up- xi
+
+
+p1 -down- pa
+p2 -down- pa
+
+pa )-down- pm
+pm -down- xr
+xr )-down- al
+al --down-- xcm
+xcm )-right- xc
+
+xc -down-> dac
+dac )-down- xt
+dac )-down- xd
+xi )-up- xc
+
+xc - xg
+xg )- ip
+ip - ri
+ri )-right- scr
+
+pd -down- acas
+acas )-down- ta
+ta -down- ccas
+ccas )-down- sc
+
+sc -down- syco
+sc -down- mp
+syco )-down- xc
+mp -down- ip
+@enduml
