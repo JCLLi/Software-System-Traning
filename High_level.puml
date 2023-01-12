@@ -1,0 +1,96 @@
+@startuml
+class “System” as sc{
++system_name: String
++system_model: String
++system_power: int
++panel_num: int
+}
+
+class "Hardware" as h{
++hardware_name: String
++hardware_brand: String
+}
+
+class "Software" as s{
++software_name: String
++software_publisher: String
++software_version: String
+}
+
+class "X-ray_components" as xc{
+-component_power: int
+-low_dose_xray_activated: bool
+-high_dose_xray_activated: bool
+-transceiver_frequency: int
+-xray_intensity: int
+-xray_resolution: int
+}
+
+class "Screen" as scr{
+-component_power: int
+-refresh_rate: int
+-resolution: int
+}
+
+class "Patient_Table" as pt{
+-size: int
+-material: String
+}
+
+
+h <|-down- xc
+h <|-down- pt
+h <|-down- scr
+
+
+
+class "Pedal_Mapper" as pm{
+-input_num: int
+-signal_recognition_resolution: int
+}
+
+class "Action_Logic" as al{
+-action_frequency: int
+-logic_mode: String
+}
+
+class "Xray_Controller" as xcr{
+-low_dose_xray_activated: bool
+-high_dose_xray_activated: bool
+-timed_pulses_frequency: int
+-xray_intensity: int
+-xray_resolution: int
+}
+
+class "Image_Processor" as ip{
+-input_image_size: int
+-input_image_resolution: int
+-output_image_size: int
+-output_image_resolution: int
+-output_image_type: int
+-output_image_colored: bool
+}
+
+class "Database" as db{
++database_size: int
++procedure_num: int
+}
+
+s <|-up- ip
+s <|-up- pm
+s <|-up- db
+s <|-up- al
+s <|-up- xcr
+
+xcr "1" -- "1"xc: control
+ip "1" -- "1..*"scr: transfer image
+db "1" -- "1"xcr: configure
+db "1" -- "1"ip: configure
+
+sc "1" *-up- "1..*" s
+sc "1" *-down- "1..*" h
+
+
+
+
+@enduml
