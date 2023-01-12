@@ -1,0 +1,49 @@
+@startuml
+actor "Surgoen" as doctor
+participant "Tablet" as tablet
+database "All Configurations and Procedures" as database
+participant "System Configurator" as configurator
+participant "Image Processor" as processor
+participant "Xray Controller" as controller
+participant "Xray Detector" as detector
+participant "Xray Tube" as tube
+
+doctor -> tablet : Check Settings
+activate tablet
+
+tablet -> database : Get All Settings
+activate database
+database --> tablet : Return All Settings
+deactivate database
+
+tablet --> doctor : Chosen Setting Details
+tablet -> configurator : Chosen Configuration & Procedure Setting
+activate configurator
+
+configurator -\ processor : Configuration Commands
+activate processor
+processor -\ configurator : Configuration Status
+deactivate processor
+
+configurator -\ controller : Configuration Commands
+activate controller
+
+controller -\ detector : (De)Activation Commands
+activate detector
+controller -\ tube : (De)Activation Commands
+activate tube
+detector -\ controller : (De)Activation Status
+deactivate detector
+tube -\ controller : (De)Activation Status
+deactivate tube
+controller -\ configurator : Configuration Status
+deactivate controller
+configurator --> tablet : Chosen Configuration & Procedure Status
+deactivate configurator
+tablet --> doctor : Chosen Setting Status
+deactivate tablet
+
+
+
+
+@enduml
