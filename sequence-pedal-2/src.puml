@@ -36,8 +36,9 @@ end
 
 doctor -\ padel1 : Release the Low-dose Padel
 padel1 -\ mapper : Low-dose Padel Released Signal
-activate mapper
 deactivate padel1
+activate mapper
+
 doctor -\ padel2 : Release the High-dose Padel
 padel2 -\ mapper : High-dose Padel Released Signal
 deactivate padel2
