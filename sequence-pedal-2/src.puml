@@ -43,6 +43,7 @@ padel2 -\ mapper : High-dose Padel Released Signal
 deactivate padel2
 
 mapper -> logic : Deactivation Xray Request
+deactivate mapper
 activate logic
 
 logic -> controller : Deactivation Xray Commands
