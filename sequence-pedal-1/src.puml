@@ -13,7 +13,7 @@ participant "Screen" as screen
 doctor -> padel : Step on the Padel
 activate padel
 
-padel -> mapper : Padel Stepped On Signal
+padel -> mapper : Padel Stepped on Signal
 activate mapper
 
 mapper -> logic : Activation Xray Request
@@ -45,6 +45,7 @@ detector -\ controller : Low-dose Optical Information
 controller -\ processor : Xray Image
 activate processor
 processor -\ screen : Readable Image
+screen -\ doctor : Display Readable Image
 deactivate processor
 end
 

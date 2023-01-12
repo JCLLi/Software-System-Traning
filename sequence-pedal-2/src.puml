@@ -1,0 +1,58 @@
+@startuml
+actor "Surgeon" as doctor
+participant "Padel for Low-dose Video" as padel1
+participant "Padel for High-dose Video" as padel2
+participant "Padel Mapper" as mapper
+participant "Action Logic" as logic
+participant "Xray Controller" as controller
+participant "Xray Process & Display Hardware" as rest
+
+doctor -\ padel1 : Step on the Low-dose Padel
+activate padel1
+doctor -\ padel2 : Step on the High-dose Padel
+activate padel2
+
+padel1 -\ mapper : Low-dose Padel stepped on Signal
+activate mapper
+padel2 -\ mapper : High-dose Padel stepped on Signal
+
+mapper -> logic : Activation Xray Request
+deactivate mapper
+activate logic
+
+logic -> controller : Activation Xray Commands
+deactivate logic
+activate controller
+
+controller -> rest : Activation Commands
+activate rest
+rest --> controller : Activation Status
+
+loop until padel released
+rest --> controller : Optical Information
+controller -> rest : Xray Image
+rest --> doctor : Display Readable Image
+end
+
+doctor -\ padel1 : Release the Low-dose Padel
+padel1 -\ mapper : Low-dose Padel Released Signal
+activate mapper
+deactivate padel1
+doctor -\ padel2 : Release the High-dose Padel
+padel2 -\ mapper : High-dose Padel Released Signal
+deactivate padel2
+
+mapper -> logic : Deactivation Xray Request
+activate logic
+
+logic -> controller : Deactivation Xray Commands
+deactivate logic
+
+controller -> rest : Deactivation Commands
+rest -> controller : Deactivation Status
+deactivate rest
+deactivate controller
+
+
+
+@enduml
