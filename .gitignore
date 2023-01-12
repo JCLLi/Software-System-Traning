@@ -1,0 +1,9 @@
+**/src-gen/*
+**/xtend-gen/*
+**/bin/
+**/test-bin/
+**/model/generated/
+!.gitkeep
+.antlr-generator-*-patch.jar
+
+.metadata/

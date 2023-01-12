@@ -1,0 +1,15 @@
+Manifest-Version: 1.0
+Automatic-Module-Name: xray.ui.tests
+Bundle-ManifestVersion: 2
+Bundle-Name: xray.ui.tests
+Bundle-Vendor: My Company
+Bundle-Version: 1.0.0.qualifier
+Bundle-SymbolicName: xray.ui.tests; singleton:=true
+Bundle-ActivationPolicy: lazy
+Require-Bundle: xray.ui,
+ org.eclipse.xtext.testing,
+ org.eclipse.xtext.xbase.testing,
+ org.eclipse.xtext.xbase.junit
+Import-Package: org.junit.jupiter.api;version="[5.1.0,6.0.0)",
+ org.junit.jupiter.api.extension;version="[5.1.0,6.0.0)"
+Bundle-RequiredExecutionEnvironment: JavaSE-11

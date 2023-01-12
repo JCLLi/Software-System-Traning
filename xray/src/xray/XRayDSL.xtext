@@ -1,0 +1,9 @@
+grammar xray.XRayDSL with org.eclipse.xtext.common.Terminals
+
+generate xRayDSL "http://www.XRayDSL.xray"
+
+Model:
+	greetings+=Greeting*;
+	
+Greeting:
+	'Hello' name=ID '!';
