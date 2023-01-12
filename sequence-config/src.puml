@@ -1,0 +1,13 @@
+@startuml
+actor "Surgoen" as doctor
+participant "Tablet" as tablet
+database "All configurations and procedures" as database
+participant "System Configurator" as configurator
+participant "Xray Controller" as controller
+participant "Image Processor" as processor
+
+
+
+
+
+@enduml

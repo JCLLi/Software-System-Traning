@@ -34,10 +34,11 @@ interface "X-ray Command" as xcm
 interface "Deactivate/Activate Command" as dac
 interface "X-ray Image" as xg
 interface "Readable Image" as ri
-interface "All configurations and procedures" as acas
-interface "Chosen configuration and procedure" as ccas
-interface "System Configuration" as syco
-interface "Medical procedure" as mp
+interface "All Configurations and Procedures" as acas
+interface "Chosen Configuration and Procedure" as ccas
+' interface "System Configuration" as syco
+' interface "Medical procedure" as mp
+interface "Configuration Commands" as CC
 
 xt -left- Xray1
 Xray1 )-down- pt
@@ -71,8 +72,12 @@ acas )-down- ta
 ta -down- ccas
 ccas )-down- sc
 
-sc -down- syco
-sc -down- mp
-syco )-down- xc
-mp -down- ip
+' sc -down- syco
+' sc -down- mp
+' syco )-down- xc
+' mp -down- ip
+sc -down- CC
+xc -up--( CC
+ip -up--( CC
+
 @enduml
