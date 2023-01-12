@@ -1,0 +1,75 @@
+@startuml
+actor "Surgeon" as doctor
+participant "Padel for Low-dose Video" as padel
+participant "Padel Mapper" as mapper
+participant "Action Logic" as logic
+participant "Xray Controller" as controller
+participant "Xray Tube" as tube
+participant "Patient Table" as table
+participant "Xray Detector" as detector
+participant "Image Processor" as processor
+participant "Screen" as screen
+
+doctor -> padel : Step on the Padel
+activate padel
+
+padel -> mapper : Padel Stepped On Signal
+activate mapper
+
+mapper -> logic : Activation Xray Request
+deactivate mapper
+activate logic
+
+logic -> controller : Activation Xray Commands
+deactivate logic
+activate controller
+
+controller -\tube : Activation Commands
+activate tube
+controller -\ detector : Activation Commands
+activate detector
+tube -\ controller : Activation Status
+detector -\ controller : Activation Status
+
+controller -\ screen : Activation Commands
+activate screen
+screen -\ controller : Activation Status
+
+
+loop until the padel is released
+tube -\ table : Low-dose Xray Beam
+activate table
+table -\ detector : Low-dose Xray Beam with patient information
+deactivate table
+detector -\ controller : Low-dose Optical Information
+controller -\ processor : Xray Image
+activate processor
+processor -\ screen : Readable Image
+deactivate processor
+end
+
+doctor -> padel : Release the Padel
+padel -> mapper : Padel Released Signal
+deactivate padel
+activate mapper
+
+mapper -> logic : Deactivation Xray Request
+deactivate mapper
+activate logic
+
+logic -> controller : Deactivation Xray Commands
+deactivate logic
+
+controller -\tube : Deactivation Commands
+controller -\ detector : Deactivation Commands
+tube -\ controller : Deactivation Status
+deactivate tube
+detector -\ controller : Deactivation Status
+deactivate detector
+
+controller -\screen : Deactivation Commands
+screen -\ controller : Deactivation Status
+deactivate screen
+deactivate controller
+
+@enduml

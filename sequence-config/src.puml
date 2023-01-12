@@ -28,9 +28,9 @@ deactivate processor
 configurator -\ controller : Configuration Commands
 activate controller
 
-controller -\ detector : (De)Activate Commands
+controller -\ detector : (De)Activation Commands
 activate detector
-controller -\ tube : (De)Activate Commands
+controller -\ tube : (De)Activation Commands
 activate tube
 detector -\ controller : (De)Activation Status
 deactivate detector
