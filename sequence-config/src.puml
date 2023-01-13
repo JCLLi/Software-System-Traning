@@ -1,5 +1,5 @@
 @startuml
-actor "Surgoen" as doctor
+actor "Surgeon" as doctor
 participant "Tablet" as tablet
 database "All Configurations and Procedures" as database
 participant "System Configurator" as configurator
