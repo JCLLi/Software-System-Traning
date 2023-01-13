@@ -37,16 +37,17 @@ screen -\ controller : Activation Status
 
 
 loop until the padel is released
-tube -\ table : Low-dose Xray Beam
+tube -> table : Low-dose Xray Beam
 activate table
-table -\ detector : Low-dose Xray Beam with patient information
+table -> detector : Low-dose Xray Beam with patient information
 deactivate table
-detector -\ controller : Low-dose Optical Information
-controller -\ processor : Xray Image
+detector -> controller : Low-dose Optical Information
+controller -> processor : Xray Image
 activate processor
-processor -\ screen : Readable Image
-screen -\ doctor : Display Readable Image
+processor -> screen : Readable Image
 deactivate processor
+screen -> doctor : Display Readable Image
+
 end
 
 doctor -> padel : Release the Padel
