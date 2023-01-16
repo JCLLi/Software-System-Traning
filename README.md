@@ -61,15 +61,19 @@ The reason that there are two figures is because of this requirement "While usin
 
 ## Class Diagram - Database
 ### Introduction
-
+This class diagram describes for each medical procedure the required settings of the XrayController and ImageProcessor components. The diagram has four classes. 'Database' is the most important class which should live the longest. Then in the database, several Medical_Procedure should be stored. And different procedures can have several sets of settings. But this graph only shows the qualitative relation rather than the quantitative relationship.
 ![](https://i.imgur.com/7bUeRZl.png)
 
 ### Textual modeling decisions
-
+The 'Database' should be the class that lives the longest because the procedures need to be stored in the database which also means the lifetime of class 'Medical_Procedure' depends on the class 'Database'. Class 'Medical_procedure' is a parent class with two different subclasses: 'Xray_COntroller_Setting' and 'Image_Processor_Setting' which represent the setting for different procedures. 
+There is a doubt about this digram. Which attributes and parameters should be included in different classes? We decide to add attributes and parameters to classes according to the hardware characteristics where the procedures will be applied to (such as database_size and output_image_resolution) and some control logic (such as low_dose_xray_activated). The parameters and attributes in class 'Database' and 'Medical_Procedure' are all public because no methods is used in this diagram, and some other classes might still need to know their features. But for two sub-classes, all attributes and parameters should be private so that those presettings can not be changed anymore.
 
 ## Class Diagram - High-level
 ### Introduction
+This diagram contains the high-level components and their quantitative relationship. The main class is 'System' consisting of parent classes 'Software' and 'Hardware'. All the software and harware components used in the system have their own subclasses. The database is considered as software because it contains all procedures for the system. There are some hardware and software classes that have no direct affiliation but are related to each other. Such as "Xray_Controller" is needed by "X-ray_components" class and "Image_Processor" needs to transfer images to the "Screen".
+![](https://i.imgur.com/vPYyDsc.png)
 
-![](https://i.imgur.com/udXiD8y.png)
+
 
 ### Textual modeling decisions
+Same as the last diagram, we doubted the most about what should be contained in every class? And we agree to add all possible features that those software and hardware components can have as their attributes and parameters. All the attributes and parameters are set as private because we don't want those be changed by other classes. For changing or getting attributes and parameters, getters and setters are designed here. All the getter methods are public so that information can be accessed easily. But all setters are private so that only the class itself can change its attributes and parameters.
