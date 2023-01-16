@@ -37,6 +37,12 @@ class "X-ray_components" as xc{
 -xray_intensity: int
 -xray_resolution: int
 
+-set_low_state_from_controller()
+-set_high_state_from_controller()
+-set_frequency_from_controller()
+-set_intensity_from_controller()
+-set_resolution_from_controller()
+
 +get_power(): int
 +get_low_state(): bool
 +get_high_state(): bool
@@ -73,16 +79,16 @@ class "Pedal_Mapper" as pm{
 -input_num: int
 -signal_recognition_resolution: int
 
--set_input_num(): int
--set_resolution(): int
+-set_input_num()
+-set_resolution()
 }
 
 class "Action_Logic" as al{
 -action_frequency: int
 -logic_mode: String
 
--set_frequency(): int
--set_mode(): int
+-set_frequency()
+-set_mode()
 }
 
 class "Xray_Controller" as xcr{
@@ -92,11 +98,17 @@ class "Xray_Controller" as xcr{
 -xray_intensity: int
 -xray_resolution: int
 
--set_power(): int
--set_low_state(): bool
--set_high_state(): bool
--set_frequency(): int
--set_resolution(): int
+-set_low_state()
+-set_high_state()
+-set_frequency_from_setting()
+-set_resolution_from_setting()
+-set_intensity_from_setting()
+
++get_low_state(): bool
++get_high_state(): bool
++get_frequency_setting(): int
++get_intensity_setting(): int
++get_resolution_setting(): int
 }
 
 class "Image_Processor" as ip{
@@ -107,12 +119,19 @@ class "Image_Processor" as ip{
 -output_image_type: String
 -output_image_colored: bool
 
--set_input_size(): int
--set_input_resolution(): int
--set_output_size(): int
--set_output_resolution(): int
--set_output_type(): String
--set_colored_output(): bool
+-set_input_size_from_setting()
+-set_input_resolution_from_setting()
+-set_output_size_from_setting()
+-set_output_resolution_from_setting()
+-set_output_type_from_setting()
+-set_colored_output_from_setting()
+
++get_input_size_setting(): int
++get_input_resolution_setting(): int
++get_output_size_setting(): int
++get_output_resolution_setting(): int
++get_output_type_setting(): String
++get_output_colored_setting(): bool
 }
 
 class "Database" as db{
