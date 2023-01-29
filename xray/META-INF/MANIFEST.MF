@@ -8,5 +8,23 @@ Bundle-SymbolicName: xray; singleton:=true
 Bundle-ActivationPolicy: lazy
 Require-Bundle: org.eclipse.xtext,
  org.eclipse.xtext.xbase,
- org.eclipse.equinox.common;bundle-version="3.5.0"
+ org.eclipse.equinox.common;bundle-version="3.5.0",
+ org.eclipse.emf.ecore,
+ org.eclipse.xtext.xbase.lib;bundle-version="2.14.0",
+ org.eclipse.xtext.util,
+ org.eclipse.emf.common,
+ org.eclipse.xtend.lib;bundle-version="2.14.0",
+ org.antlr.runtime;bundle-version="[3.2.0,3.2.1)"
 Bundle-RequiredExecutionEnvironment: JavaSE-11
+Export-Package: xray.serializer,
+ xray.generator,
+ xray.xRayDSL.impl,
+ xray.xRayDSL,
+ xray.scoping,
+ xray,
+ xray.parser.antlr,
+ xray.validation,
+ xray.xRayDSL.util,
+ xray.services,
+ xray.parser.antlr.internal
+Import-Package: org.apache.log4j
