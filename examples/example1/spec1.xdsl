@@ -1,0 +1,26 @@
+Static_Configuration: 
+
+//uncomment the following seven lines for 6 pedals
+//SPedal1: DoseType: Low Projection: Frontal Function: Video
+//SPedal2: DoseType: Low Projection: Lateral Function: Video
+//SPedal3: DoseType: Low Projection: Biplane Function: Video
+//SPedal4: DoseType: Other Function: Other
+//SPedal5: DoseType: High Projection: Frontal Function: Video
+//SPedal6: DoseType: High Projection: Frontal Function: Image
+//Order: round_robin
+
+
+//comment the following three lines for 6 pedals
+TPedal1: DoseType: Low Function: Video
+TPedal2: DoseType: High Function: Video
+TPedal3: DoseType: Low Function: Image 
+
+Dynamic_Logic:
+
+//uncomment the following three lines for 6 pedals
+//Selection_Pedal_Behavior: High_Behavior: high_pressed_ignore Low_Behavior: low_pressed_combine
+//Same_Dose_Behavior: High_Behavior: high_pressed_combine Low_Behavior: low_pressed_combine
+//Different_Dose_Behavior: High_Behavior: high_pressed_combine Low_Behavior: low_pressed_ignore
+
+//comment the following line for 6 pedals
+Different_Dose_Behavior: High_Behavior: high_pressed_combine Low_Behavior: low_pressed_ignore
